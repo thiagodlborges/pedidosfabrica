@@ -1312,15 +1312,8 @@ async function submitPedido() {
       itens
     };
 
-    // Google Sheets — via no-cors para evitar bloqueio de CORS
-    fetch(SHEETS_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(pedidoPayload)
-    }).then(() => {
-      console.log('Pedido enviado ao Google Sheets:', numeroPedido);
-    }).catch(e => console.warn('Sheets indisponível:', e));
+    // Google Sheets — via iframe oculto (contorna CORS do Apps Script)
+    enviarParaSheets(pedidoPayload);
 
     // ── SUPABASE em background como backup ─────────────────
     // Try to send to Supabase in background (non-blocking)
@@ -1685,6 +1678,48 @@ function downloadPDF() {
 // ============================================================
 function newPedido() {
   location.reload();
+}
+
+// ============================================================
+// ENVIO PARA GOOGLE SHEETS via iframe oculto
+// ============================================================
+function enviarParaSheets(payload) {
+  try {
+    // Cria um iframe oculto para receber a resposta
+    const iframeId = 'sheets-iframe-' + Date.now();
+    const iframe = document.createElement('iframe');
+    iframe.name = iframeId;
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    // Cria formulário oculto apontando para o Apps Script
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = SHEETS_URL;
+    form.target = iframeId;
+    form.style.display = 'none';
+
+    // Serializa o payload como campo único
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'payload';
+    input.value = JSON.stringify(payload);
+    form.appendChild(input);
+
+    document.body.appendChild(form);
+    form.submit();
+
+    console.log('Pedido enviado ao Google Sheets:', payload.pedido.numero_pedido);
+
+    // Limpa após 10 segundos
+    setTimeout(() => {
+      try { document.body.removeChild(form); } catch(e) {}
+      try { document.body.removeChild(iframe); } catch(e) {}
+    }, 10000);
+
+  } catch(e) {
+    console.warn('Erro ao enviar para Sheets:', e);
+  }
 }
 </script>
 </body>
