@@ -1265,64 +1265,64 @@ async function submitPedido() {
     const pedidoRes = await sbInsert('pedidos', [{
       numero_pedido: numeroPedido,
       loja: loja,
-      data_pedido: new Date().toISOString().split('T')[0],
       data_entrega_prevista: dataEntrega,
       status: 'pendente',
       observacoes: obs || null,
       criado_por: loja
     }]);
 
-    if (!pedidoRes.ok) throw new Error('Erro ao criar pedido');
+    if (!pedidoRes.ok) {
+      const errBody = await pedidoRes.text();
+      console.error('Erro pedido:', pedidoRes.status, errBody);
+      throw new Error(`Erro ao criar pedido (${pedidoRes.status}): ${errBody}`);
+    }
     const pedidoData = await pedidoRes.json();
     const pedidoId = pedidoData[0].id;
     lastPedidoId = pedidoId;
     lastPedidoNum = numeroPedido;
 
-    // Collect all items for pedido_itens
+    // Collect all items — sem lookup de produto_id, usa nome como observacao
     const itens = [];
 
-    // Fetch produto IDs from DB
-    const prodRes = await sbSelect('produtos', 'id,nome,categoria_id');
-    const prodData = prodRes.ok ? await prodRes.json() : [];
-    const prodMap = {};
-    prodData.forEach(p => { prodMap[p.nome.toLowerCase()] = p.id; });
-
-    const addItens = (items, prefix) => {
+    const addItens = (items, prefix, categoria) => {
       items.forEach((item, i) => {
         const nome = typeof item === 'string' ? item : item.nome;
         const un = typeof item === 'string' ? 'unidade' : item.un;
         const qty = parseInt(document.getElementById(`${prefix}-${i}`)?.value) || 0;
         if (qty > 0) {
-          const pid = prodMap[nome.toLowerCase()] || null;
           itens.push({
             pedido_id: pedidoId,
-            produto_id: pid,
+            produto_id: null,
             quantidade: qty,
             unidade: un,
-            observacao: nome
+            observacao: `[${categoria}] ${nome}`
           });
         }
       });
     };
 
-    addItens(gelatos, 'gelato');
-    addItens(potes, 'pote');
-    addItens(confeitaria, 'confeitaria');
-    addItens(insumos, 'insumo');
+    addItens(gelatos, 'gelato', 'Gelato');
+    addItens(potes, 'pote', 'Pote');
+    addItens(confeitaria, 'confeitaria', 'Confeitaria');
+    addItens(insumos, 'insumo', 'Insumo');
 
     // Outros itens
     document.querySelectorAll('#outros-container .outros-item').forEach(div => {
       const id = div.id.replace('outro-', '');
       const desc = document.getElementById(`outro-desc-${id}`)?.value?.trim();
-      const qty = parseFloat(document.getElementById(`outro-qty-${id}`)?.value) || 0;
+      const qty = parseFloat(document.getElementById(`outro-qty-${id}`)?.value) || 1;
       if (desc) {
-        itens.push({ pedido_id: pedidoId, produto_id: null, quantidade: qty || 1, unidade: 'unidade', observacao: desc });
+        itens.push({ pedido_id: pedidoId, produto_id: null, quantidade: qty, unidade: 'unidade', observacao: `[Outro] ${desc}` });
       }
     });
 
     if (itens.length > 0) {
       const itensRes = await sbInsert('pedido_itens', itens);
-      if (!itensRes.ok) console.warn('Erro ao inserir itens');
+      if (!itensRes.ok) {
+        const errBody = await itensRes.text();
+        console.error('Erro itens:', itensRes.status, errBody);
+        throw new Error(`Erro ao salvar itens (${itensRes.status}): ${errBody}`);
+      }
     }
 
     // SUCCESS
