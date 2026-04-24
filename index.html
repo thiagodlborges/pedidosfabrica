@@ -1681,42 +1681,21 @@ function newPedido() {
 }
 
 // ============================================================
-// ENVIO PARA GOOGLE SHEETS via iframe oculto
+// ENVIO PARA GOOGLE SHEETS via GET com parâmetro na URL
 // ============================================================
 function enviarParaSheets(payload) {
   try {
-    // Cria um iframe oculto para receber a resposta
-    const iframeId = 'sheets-iframe-' + Date.now();
-    const iframe = document.createElement('iframe');
-    iframe.name = iframeId;
-    iframe.style.display = 'none';
-    document.body.appendChild(iframe);
+    const json = JSON.stringify(payload);
+    const encoded = encodeURIComponent(json);
+    const url = SHEETS_URL + '?payload=' + encoded;
 
-    // Cria formulário oculto apontando para o Apps Script
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = SHEETS_URL;
-    form.target = iframeId;
-    form.style.display = 'none';
+    // Usa uma imagem fantasma — dispara GET sem restrição de CORS
+    const img = new Image();
+    img.src = url;
+    img.onload = () => console.log('Sheets: pedido recebido', payload.pedido.numero_pedido);
+    img.onerror = () => console.log('Sheets: pedido enviado (resposta não-imagem é normal)', payload.pedido.numero_pedido);
 
-    // Serializa o payload como campo único
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = 'payload';
-    input.value = JSON.stringify(payload);
-    form.appendChild(input);
-
-    document.body.appendChild(form);
-    form.submit();
-
-    console.log('Pedido enviado ao Google Sheets:', payload.pedido.numero_pedido);
-
-    // Limpa após 10 segundos
-    setTimeout(() => {
-      try { document.body.removeChild(form); } catch(e) {}
-      try { document.body.removeChild(iframe); } catch(e) {}
-    }, 10000);
-
+    console.log('Enviando para Sheets:', payload.pedido.numero_pedido);
   } catch(e) {
     console.warn('Erro ao enviar para Sheets:', e);
   }
