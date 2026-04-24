@@ -1261,27 +1261,7 @@ async function submitPedido() {
     const lojaCode = loja.substring(0,3).toUpperCase().replace(/\s/g,'');
     const numeroPedido = `LUN-${lojaCode}-${ts}`;
 
-    // Insert pedido
-    const pedidoRes = await sbInsert('pedidos', [{
-      numero_pedido: numeroPedido,
-      loja: loja,
-      data_entrega_prevista: dataEntrega,
-      status: 'pendente',
-      observacoes: obs || null,
-      criado_por: loja
-    }]);
-
-    if (!pedidoRes.ok) {
-      const errBody = await pedidoRes.text();
-      console.error('Erro pedido:', pedidoRes.status, errBody);
-      throw new Error(`Erro ao criar pedido (${pedidoRes.status}): ${errBody}`);
-    }
-    const pedidoData = await pedidoRes.json();
-    const pedidoId = pedidoData[0].id;
-    lastPedidoId = pedidoId;
-    lastPedidoNum = numeroPedido;
-
-    // Collect all items — sem lookup de produto_id, usa nome como observacao
+    // Collect all items
     const itens = [];
 
     const addItens = (items, prefix, categoria) => {
@@ -1291,7 +1271,6 @@ async function submitPedido() {
         const qty = parseInt(document.getElementById(`${prefix}-${i}`)?.value) || 0;
         if (qty > 0) {
           itens.push({
-            pedido_id: pedidoId,
             produto_id: null,
             quantidade: qty,
             unidade: un,
@@ -1306,24 +1285,44 @@ async function submitPedido() {
     addItens(confeitaria, 'confeitaria', 'Confeitaria');
     addItens(insumos, 'insumo', 'Insumo');
 
-    // Outros itens
     document.querySelectorAll('#outros-container .outros-item').forEach(div => {
       const id = div.id.replace('outro-', '');
       const desc = document.getElementById(`outro-desc-${id}`)?.value?.trim();
       const qty = parseFloat(document.getElementById(`outro-qty-${id}`)?.value) || 1;
       if (desc) {
-        itens.push({ pedido_id: pedidoId, produto_id: null, quantidade: qty, unidade: 'unidade', observacao: `[Outro] ${desc}` });
+        itens.push({ produto_id: null, quantidade: qty, unidade: 'unidade', observacao: `[Outro] ${desc}` });
       }
     });
 
-    if (itens.length > 0) {
-      const itensRes = await sbInsert('pedido_itens', itens);
-      if (!itensRes.ok) {
-        const errBody = await itensRes.text();
-        console.error('Erro itens:', itensRes.status, errBody);
-        throw new Error(`Erro ao salvar itens (${itensRes.status}): ${errBody}`);
-      }
+    // Send via Edge Function (bypasses CORS restriction)
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/salvar-pedido`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      },
+      body: JSON.stringify({
+        pedido: {
+          numero_pedido: numeroPedido,
+          loja: loja,
+          data_entrega_prevista: dataEntrega,
+          status: 'pendente',
+          observacoes: obs || null,
+          criado_por: loja
+        },
+        itens
+      })
+    });
+
+    const result = await res.json();
+    if (!res.ok || result.error) {
+      console.error('Erro Edge Function:', result);
+      throw new Error(result.error || `Erro ${res.status}`);
     }
+
+    lastPedidoId = result.pedido_id;
+    lastPedidoNum = numeroPedido;
 
     // SUCCESS
     document.getElementById('loadingOverlay').classList.remove('show');
