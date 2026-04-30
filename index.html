@@ -2038,97 +2038,37 @@ async function submitPedido() {
     // Google Sheets — via iframe oculto (contorna CORS do Apps Script)
     enviarParaSheets(pedidoPayload);
 
-    // ── SALVAR NO SUPABASE via client autenticado ────────────
-    const pedidoPayload_sb = {
-      pedido: {
+    // ── SALVAR NO SUPABASE (await direto) ──────────────────
+    try {
+      const { data: pedData, error: pedErr } = await sb.from('pedidos').insert([{
         numero_pedido: numeroPedido,
         loja: loja,
+        data_pedido: new Date().toISOString().split('T')[0],
         data_entrega_prevista: dataEntrega,
         status: 'pendente',
         observacoes: obs || null,
         criado_por: loja
-      },
-      itens
-    };
+      }]).select();
 
-    // Tenta salvar via Supabase JS (usa sessão autenticada automaticamente)
-    sb.from('pedidos').insert([{
-      numero_pedido: numeroPedido,
-      loja: loja,
-      data_pedido: new Date().toISOString().split('T')[0],
-      data_entrega_prevista: dataEntrega,
-      status: 'pendente',
-      observacoes: obs || null,
-      criado_por: loja
-    }]).select().then(({ data: pedData, error: pedErr }) => {
-      if (!pedErr && pedData && pedData[0]) {
+      if (pedErr) {
+        console.error('Erro ao salvar pedido:', pedErr.message, pedErr.details, pedErr.hint);
+      } else if (pedData && pedData[0]) {
         lastPedidoId = pedData[0].id;
+        console.log('Pedido salvo no Supabase. ID:', lastPedidoId);
+
         if (itens.length > 0) {
           const itensComId = itens.map(it => ({ ...it, pedido_id: lastPedidoId }));
-          sb.from('pedido_itens').insert(itensComId)
-            .then(({ error }) => {
-              if (error) console.warn('Itens não salvos:', error);
-              else console.log('Pedido salvo no Supabase:', numeroPedido);
-            });
+          const { error: itensErr } = await sb.from('pedido_itens').insert(itensComId);
+          if (itensErr) console.error('Erro ao salvar itens:', itensErr.message);
+          else console.log('Itens salvos:', itens.length);
         }
-      } else {
-        console.warn('Erro ao salvar pedido no Supabase:', pedErr);
       }
-    });
+    } catch(saveErr) {
+      console.error('Exceção ao salvar no Supabase:', saveErr);
+    }
 
-    // Fallback via fetch REST com token de sessão
-    fetch(`${SUPABASE_URL}/functions/v1/salvar-pedido`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`
-      },
-      body: JSON.stringify(pedidoPayload_sb)
-    }).then(async r => {
-      const body = await r.json().catch(() => ({}));
-      if (r.ok && !body.error) {
-        lastPedidoId = body.pedido_id;
-        console.log('Pedido salvo no Supabase via Edge Function:', numeroPedido);
-      } else {
-        // Fallback: try direct REST insert
-        // Usa sessão autenticada para salvar
-        const { data: { session } } = await sb.auth.getSession();
-        const authToken = session ? session.access_token : SUPABASE_KEY;
-        return fetch(`${SUPABASE_URL}/rest/v1/pedidos`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${authToken}`,
-            'Prefer': 'return=representation'
-          },
-          body: JSON.stringify([pedidoPayload_sb.pedido])
-        }).then(async r2 => {
-          if (r2.ok) {
-            const d = await r2.json();
-            lastPedidoId = d[0]?.id;
-            if (itens.length > 0 && lastPedidoId) {
-              const itensComId = itens.map(i => ({ ...i, pedido_id: lastPedidoId }));
-              fetch(`${SUPABASE_URL}/rest/v1/pedido_itens`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'apikey': SUPABASE_KEY,
-                  'Authorization': `Bearer ${authToken}`,
-                  'Prefer': 'return=minimal'
-                },
-                body: JSON.stringify(itensComId)
-              }).catch(e => console.warn('Itens não salvos:', e));
-            }
-            console.log('Pedido salvo no Supabase:', numeroPedido, 'id:', lastPedidoId);
-          } else {
-            const errText = await r2.text();
-            console.warn('Supabase REST falhou:', r2.status, errText);
-          }
-        });
-      }
-    }).catch(e => console.warn('Envio em background falhou:', e));
+    // Google Sheets em background (não bloqueante)
+    enviarParaSheets(pedidoPayload);
 
     // SUCCESS
     document.getElementById('loadingOverlay').classList.remove('show');
