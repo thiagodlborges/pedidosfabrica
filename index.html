@@ -1572,7 +1572,7 @@ async function verificarLojaUser(user) {
       return;
     }
 
-    lojaUsuario = { ...user, nome: perfil.nome, loja: perfil.loja || 'Todas as lojas', tipo: perfil.tipo };
+    lojaUsuario = { ...user, nome: perfil.nome, loja: perfil.loja || null, tipo: perfil.tipo };
     mostrarSite();
     document.getElementById('lojaLoginDropdown').classList.remove('show');
     document.getElementById('lojaLoginTrigger').style.display = 'none';
