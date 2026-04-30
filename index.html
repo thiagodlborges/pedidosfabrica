@@ -1564,7 +1564,7 @@ async function verificarLojaUser(user) {
       return;
     }
 
-    if (!perfil || !['loja','master'].includes(perfil.tipo)) {
+    if (!perfil || !['loja','master','master_loja'].includes(perfil.tipo)) {
       // Usuário existe mas não é loja/master (ex: fábrica) — redireciona
       const err = document.getElementById('lsError');
       if (err) { err.textContent = 'Este acesso é exclusivo para usuários de loja.'; err.classList.add('show'); }
@@ -1660,7 +1660,7 @@ function mostrarArea(area) {
 async function verificarNotificacoesNovas() {
   if (!lojaUsuario) return;
   let qDot = sb.from('notificacoes').select('id').eq('lida', false).eq('de', 'fabrica');
-  if (lojaUsuario.tipo !== 'master') qDot = qDot.eq('loja', lojaUsuario.loja);
+  if (!['master','master_loja'].includes(lojaUsuario.tipo)) qDot = qDot.eq('loja', lojaUsuario.loja);
   const { data } = await qDot;
   const dot = document.getElementById('dotNovos');
   dot.style.display = (data && data.length > 0) ? 'inline-block' : 'none';
@@ -1668,7 +1668,7 @@ async function verificarNotificacoesNovas() {
 
 async function marcarTodasLidas() {
   if (!lojaUsuario) return;
-  if (lojaUsuario.tipo !== 'master') {
+  if (!['master','master_loja'].includes(lojaUsuario.tipo)) {
     await sb.from('notificacoes')
       .update({ lida: true })
       .eq('loja', lojaUsuario.loja)
@@ -1683,7 +1683,7 @@ async function carregarHistorico() {
   c.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-light)">Carregando...</div>';
 
   let query = sb.from('pedidos').select('*, pedido_itens(*)').order('id', { ascending: false });
-  if (lojaUsuario.tipo !== 'master') query = query.eq('loja', lojaUsuario.loja);
+  if (!['master','master_loja'].includes(lojaUsuario.tipo)) query = query.eq('loja', lojaUsuario.loja);
   const { data: pedidos } = await query;
 
   if (!pedidos || !pedidos.length) {
@@ -1698,7 +1698,7 @@ async function carregarHistorico() {
   const statusLabel = { pendente:'⏳ Pendente', confirmado:'✅ Confirmado', separado:'📦 Em Separação', enviado:'🚚 Enviado', rejeitado:'❌ Rejeitado' };
 
   // Renderiza tabela de histórico
-  const isMaster = lojaUsuario.tipo === 'master';
+  const isMaster = ['master','master_loja'].includes(lojaUsuario.tipo);
   const stColors = {
     pendente: 'background:#FFF3E0;color:#E07B39',
     confirmado: 'background:#E8F5E9;color:#2D6A4F',
@@ -1746,7 +1746,7 @@ async function carregarNotificacoes() {
   c.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-light)">Carregando...</div>';
 
   let qNotif = sb.from('notificacoes').select('*').order('criado_em', { ascending: false });
-  if (lojaUsuario.tipo !== 'master') qNotif = qNotif.eq('loja', lojaUsuario.loja);
+  if (!['master','master_loja'].includes(lojaUsuario.tipo)) qNotif = qNotif.eq('loja', lojaUsuario.loja);
   const { data: notifs } = await qNotif;
 
   if (!notifs || !notifs.length) {
@@ -1863,7 +1863,7 @@ function validateStep(step) {
   if (step === 0) {
     // Loja vem do usuário logado ou do radio button
     const lojaRadio = document.querySelector('input[name="loja"]:checked');
-    const lojaValue = (lojaUsuario && lojaUsuario.tipo !== 'master' && lojaUsuario.loja) ? lojaUsuario.loja : (lojaRadio ? lojaRadio.value : null);
+    const lojaValue = (lojaUsuario && !['master','master_loja'].includes(lojaUsuario.tipo) && lojaUsuario.loja) ? lojaUsuario.loja : (lojaRadio ? lojaRadio.value : null);
     if (!lojaValue) { showError('Por favor, selecione a loja.'); return false; }
     const data = document.getElementById('dataEntrega').value;
     if (!data) { showError('Por favor, selecione a data de entrega.'); return false; }
@@ -1907,7 +1907,7 @@ function getOutros() {
 }
 
 function buildReview() {
-  const loja = (lojaUsuario && lojaUsuario.tipo !== 'master' && lojaUsuario.loja)
+  const loja = (lojaUsuario && !['master','master_loja'].includes(lojaUsuario.tipo) && lojaUsuario.loja)
     ? lojaUsuario.loja
     : document.querySelector('input[name="loja"]:checked')?.value;
   const dataRaw = document.getElementById('dataEntrega').value;
@@ -1976,7 +1976,7 @@ async function submitPedido() {
 
   try {
     // Master usa loja selecionada no formulário; loja usa perfil
-    const loja = (lojaUsuario && lojaUsuario.tipo !== 'master' && lojaUsuario.loja)
+    const loja = (lojaUsuario && !['master','master_loja'].includes(lojaUsuario.tipo) && lojaUsuario.loja)
       ? lojaUsuario.loja
       : document.querySelector('input[name="loja"]:checked')?.value;
     const dataEntrega = document.getElementById('dataEntrega').value;
@@ -2133,7 +2133,7 @@ function downloadPDF() {
   const WHITE   = [253, 250, 246];
   const TEXT    = [44, 24, 16];
 
-  const loja = (lojaUsuario && lojaUsuario.tipo !== 'master' && lojaUsuario.loja)
+  const loja = (lojaUsuario && !['master','master_loja'].includes(lojaUsuario.tipo) && lojaUsuario.loja)
     ? lojaUsuario.loja
     : (document.querySelector('input[name="loja"]:checked')?.value || '');
   const dataEntregaRaw = document.getElementById('dataEntrega').value;
