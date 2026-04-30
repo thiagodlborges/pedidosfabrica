@@ -1119,7 +1119,11 @@
     <div class="section-body">
       <div class="field-group">
         <label class="required">Loja Solicitante</label>
-        <div class="loja-grid">
+        <div id="lojaLogadaInfo" style="display:none;background:var(--creme);border:1.5px solid var(--creme-dark);border-radius:8px;padding:12px 16px;margin-bottom:12px;font-size:0.9rem;color:var(--text)">
+          🏪 <strong id="lojaLogadaNome"></strong>
+          <span style="font-size:0.75rem;color:var(--text-light);margin-left:8px">(identificado pelo login)</span>
+        </div>
+        <div class="loja-grid" id="lojaGrid">
           <div class="loja-option"><input type="radio" name="loja" id="loja-esplanada" value="Esplanada"><label for="loja-esplanada">Esplanada</label></div>
           <div class="loja-option"><input type="radio" name="loja" id="loja-ciane" value="Cianê"><label for="loja-ciane">Cianê</label></div>
           <div class="loja-option"><input type="radio" name="loja" id="loja-tucuruvi" value="Tucuruvi"><label for="loja-tucuruvi">Tucuruvi</label></div>
@@ -1131,7 +1135,7 @@
           <div class="loja-option"><input type="radio" name="loja" id="loja-iguatemi" value="Iguatemi Campinas"><label for="loja-iguatemi">Iguatemi Campinas</label></div>
           <div class="loja-option"><input type="radio" name="loja" id="loja-itaquera" value="Shopping Itaquera"><label for="loja-itaquera">Shopping Itaquera</label></div>
           <div class="loja-option"><input type="radio" name="loja" id="loja-atrium" value="Atrium"><label for="loja-atrium">Atrium</label></div>
-        </div>
+        </div><!-- /loja-grid -->
       </div>
 
       <div class="field-group">
@@ -1600,6 +1604,21 @@ function mostrarArea(area) {
     document.querySelectorAll('.section-card').forEach(s => s.classList.remove('active-section'));
     document.getElementById('section-0').classList.add('active-section');
     currentStep = 0;
+    // Auto-seleciona a loja do usuário logado
+    if (lojaUsuario && lojaUsuario.loja) {
+      document.querySelectorAll('input[name="loja"]').forEach(r => {
+        if (r.value === lojaUsuario.loja) { r.checked = true; }
+      });
+    }
+    // Mostra info de loja logada ou grid de seleção
+    if (lojaUsuario && lojaUsuario.loja && lojaUsuario.tipo !== 'master') {
+      document.getElementById('lojaLogadaInfo').style.display = 'block';
+      document.getElementById('lojaLogadaNome').textContent = lojaUsuario.loja;
+      document.getElementById('lojaGrid').style.display = 'none';
+    } else {
+      document.getElementById('lojaLogadaInfo').style.display = 'none';
+      document.getElementById('lojaGrid').style.display = 'grid';
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
     return;
   }
@@ -1809,8 +1828,10 @@ function validateStep(step) {
   const err = document.getElementById('errorMsg');
 
   if (step === 0) {
-    const loja = document.querySelector('input[name="loja"]:checked');
-    if (!loja) { showError('Por favor, selecione a loja.'); return false; }
+    // Loja vem do usuário logado ou do radio button
+    const lojaRadio = document.querySelector('input[name="loja"]:checked');
+    const lojaValue = (lojaUsuario && lojaUsuario.loja) ? lojaUsuario.loja : (lojaRadio ? lojaRadio.value : null);
+    if (!lojaValue) { showError('Por favor, selecione a loja.'); return false; }
     const data = document.getElementById('dataEntrega').value;
     if (!data) { showError('Por favor, selecione a data de entrega.'); return false; }
     // Validate min date
@@ -1853,7 +1874,9 @@ function getOutros() {
 }
 
 function buildReview() {
-  const loja = document.querySelector('input[name="loja"]:checked')?.value;
+  const loja = (lojaUsuario && lojaUsuario.loja)
+    ? lojaUsuario.loja
+    : document.querySelector('input[name="loja"]:checked')?.value;
   const dataRaw = document.getElementById('dataEntrega').value;
   const dataFormatted = dataRaw ? new Date(dataRaw + 'T00:00:00').toLocaleDateString('pt-BR') : '';
   const obs = document.getElementById('observacoes').value.trim();
@@ -1919,7 +1942,10 @@ async function submitPedido() {
   document.getElementById('loadingOverlay').classList.add('show');
 
   try {
-    const loja = document.querySelector('input[name="loja"]:checked')?.value;
+    // Pega loja do usuário logado (prioritário) ou do radio button
+    const loja = (lojaUsuario && lojaUsuario.loja)
+      ? lojaUsuario.loja
+      : document.querySelector('input[name="loja"]:checked')?.value;
     const dataEntrega = document.getElementById('dataEntrega').value;
     const obs = document.getElementById('observacoes').value.trim();
 
@@ -2097,7 +2123,9 @@ function downloadPDF() {
   const WHITE   = [253, 250, 246];
   const TEXT    = [44, 24, 16];
 
-  const loja = document.querySelector('input[name="loja"]:checked')?.value || '';
+  const loja = (lojaUsuario && lojaUsuario.loja)
+    ? lojaUsuario.loja
+    : (document.querySelector('input[name="loja"]:checked')?.value || '');
   const dataEntregaRaw = document.getElementById('dataEntrega').value;
   const dataEntrega = dataEntregaRaw
     ? new Date(dataEntregaRaw + 'T00:00:00').toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' })
