@@ -982,7 +982,7 @@
 <!-- ── ÁREA LOGADA DA LOJA ─────────────────────────────── -->
 <div class="loja-area" id="lojaAreaPedidos">
   <div class="loja-section-title">Meus Pedidos</div>
-  <div class="loja-section-sub">Histórico de pedidos desta loja, do mais recente ao mais antigo.</div>
+  <div class="loja-section-sub" id="histSubtitle">Histórico de pedidos, do mais recente ao mais antigo.</div>
   <div id="histContainer"><div style="text-align:center;padding:32px;color:var(--text-light)">Carregando...</div></div>
 </div>
 
@@ -1410,11 +1410,11 @@ async function lojaLogin() {
 
 async function verificarLojaUser(user) {
   const { data: perfil } = await sb.from('perfis').select('*').eq('id', user.id).single();
-  if (!perfil || perfil.tipo !== 'loja') {
-    // Não é usuário de loja — não faz nada (pode ser fábrica)
+  if (!perfil || !['loja','master'].includes(perfil.tipo)) {
+    // Não é usuário de loja/master — não faz nada (pode ser fábrica)
     return;
   }
-  lojaUsuario = { ...user, nome: perfil.nome, loja: perfil.loja };
+  lojaUsuario = { ...user, nome: perfil.nome, loja: perfil.loja, tipo: perfil.tipo };
   document.getElementById('lojaLoginDropdown').classList.remove('show');
   document.getElementById('lojaLoginTrigger').style.display = 'none';
   document.getElementById('lojaUserBar').style.display = 'flex';
@@ -1468,21 +1468,21 @@ function mostrarArea(area) {
 
 async function verificarNotificacoesNovas() {
   if (!lojaUsuario) return;
-  const { data } = await sb.from('notificacoes')
-    .select('id')
-    .eq('loja', lojaUsuario.loja)
-    .eq('lida', false)
-    .eq('de', 'fabrica');
+  let qDot = sb.from('notificacoes').select('id').eq('lida', false).eq('de', 'fabrica');
+  if (lojaUsuario.tipo !== 'master') qDot = qDot.eq('loja', lojaUsuario.loja);
+  const { data } = await qDot;
   const dot = document.getElementById('dotNovos');
   dot.style.display = (data && data.length > 0) ? 'inline-block' : 'none';
 }
 
 async function marcarTodasLidas() {
   if (!lojaUsuario) return;
-  await sb.from('notificacoes')
-    .update({ lida: true })
-    .eq('loja', lojaUsuario.loja)
-    .eq('de', 'fabrica');
+  if (lojaUsuario.tipo !== 'master') {
+    await sb.from('notificacoes')
+      .update({ lida: true })
+      .eq('loja', lojaUsuario.loja)
+      .eq('de', 'fabrica');
+  }
   document.getElementById('dotNovos').style.display = 'none';
 }
 
@@ -1491,10 +1491,9 @@ async function carregarHistorico() {
   const c = document.getElementById('histContainer');
   c.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-light)">Carregando...</div>';
 
-  const { data: pedidos } = await sb.from('pedidos')
-    .select('*, pedido_itens(*)')
-    .eq('loja', lojaUsuario.loja)
-    .order('id', { ascending: false });
+  let query = sb.from('pedidos').select('*, pedido_itens(*)').order('id', { ascending: false });
+  if (lojaUsuario.tipo !== 'master') query = query.eq('loja', lojaUsuario.loja);
+  const { data: pedidos } = await query;
 
   if (!pedidos || !pedidos.length) {
     c.innerHTML = `<div style="text-align:center;padding:48px;color:var(--text-light)">
@@ -1534,7 +1533,7 @@ async function carregarHistorico() {
     return `
     <div class="hist-card">
       <div class="hist-header" onclick="this.nextElementSibling.classList.toggle('open')">
-        <div><div class="hist-num">${p.numero_pedido||'#'+p.id}</div><div style="font-size:0.8rem;color:var(--text-light)">${itens.length} itens</div></div>
+        <div><div class="hist-num">${p.numero_pedido||'#'+p.id}</div><div style="font-size:0.8rem;color:var(--text-light)">${lojaUsuario.tipo==='master'?p.loja+' · ':''}${itens.length} itens</div></div>
         <div><div style="font-size:0.65rem;color:var(--text-light);text-transform:uppercase;margin-bottom:2px">Pedido em</div><div class="hist-date">${dataP}</div></div>
         <div><div style="font-size:0.65rem;color:var(--text-light);text-transform:uppercase;margin-bottom:2px">Entrega</div><div class="hist-entrega">${dataE}</div></div>
         <span class="hist-badge hb-${st}">${statusLabel[st]||st}</span>
@@ -1552,10 +1551,9 @@ async function carregarNotificacoes() {
   const c = document.getElementById('notifsContainer');
   c.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-light)">Carregando...</div>';
 
-  const { data: notifs } = await sb.from('notificacoes')
-    .select('*')
-    .eq('loja', lojaUsuario.loja)
-    .order('criado_em', { ascending: false });
+  let qNotif = sb.from('notificacoes').select('*').order('criado_em', { ascending: false });
+  if (lojaUsuario.tipo !== 'master') qNotif = qNotif.eq('loja', lojaUsuario.loja);
+  const { data: notifs } = await qNotif;
 
   if (!notifs || !notifs.length) {
     c.innerHTML = `<div style="text-align:center;padding:48px;color:var(--text-light)">
