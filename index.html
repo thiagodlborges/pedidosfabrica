@@ -1637,11 +1637,13 @@ function mostrarArea(area) {
       });
     }
     // Mostra info de loja logada ou grid de seleção
-    if (lojaUsuario && lojaUsuario.loja && lojaUsuario.tipo !== 'master') {
+    if (lojaUsuario && lojaUsuario.tipo === 'loja' && lojaUsuario.loja) {
+      // Loja normal: mostra nome fixo e esconde grid
       document.getElementById('lojaLogadaInfo').style.display = 'block';
       document.getElementById('lojaLogadaNome').textContent = lojaUsuario.loja;
       document.getElementById('lojaGrid').style.display = 'none';
     } else {
+      // Master ou sem loja: mostra grid de seleção normalmente
       document.getElementById('lojaLogadaInfo').style.display = 'none';
       document.getElementById('lojaGrid').style.display = 'grid';
     }
@@ -1861,7 +1863,7 @@ function validateStep(step) {
   if (step === 0) {
     // Loja vem do usuário logado ou do radio button
     const lojaRadio = document.querySelector('input[name="loja"]:checked');
-    const lojaValue = (lojaUsuario && lojaUsuario.loja) ? lojaUsuario.loja : (lojaRadio ? lojaRadio.value : null);
+    const lojaValue = (lojaUsuario && lojaUsuario.tipo !== 'master' && lojaUsuario.loja) ? lojaUsuario.loja : (lojaRadio ? lojaRadio.value : null);
     if (!lojaValue) { showError('Por favor, selecione a loja.'); return false; }
     const data = document.getElementById('dataEntrega').value;
     if (!data) { showError('Por favor, selecione a data de entrega.'); return false; }
@@ -1905,7 +1907,7 @@ function getOutros() {
 }
 
 function buildReview() {
-  const loja = (lojaUsuario && lojaUsuario.loja)
+  const loja = (lojaUsuario && lojaUsuario.tipo !== 'master' && lojaUsuario.loja)
     ? lojaUsuario.loja
     : document.querySelector('input[name="loja"]:checked')?.value;
   const dataRaw = document.getElementById('dataEntrega').value;
@@ -1973,8 +1975,8 @@ async function submitPedido() {
   document.getElementById('loadingOverlay').classList.add('show');
 
   try {
-    // Pega loja do usuário logado (prioritário) ou do radio button
-    const loja = (lojaUsuario && lojaUsuario.loja)
+    // Master usa loja selecionada no formulário; loja usa perfil
+    const loja = (lojaUsuario && lojaUsuario.tipo !== 'master' && lojaUsuario.loja)
       ? lojaUsuario.loja
       : document.querySelector('input[name="loja"]:checked')?.value;
     const dataEntrega = document.getElementById('dataEntrega').value;
@@ -2071,6 +2073,7 @@ async function submitPedido() {
     enviarParaSheets(pedidoPayload);
 
     // SUCCESS
+    btn.disabled = false;
     document.getElementById('loadingOverlay').classList.remove('show');
     // Esconde áreas da loja e mostra tela de sucesso
     document.querySelectorAll('.loja-area').forEach(a => a.classList.remove('show'));
@@ -2080,10 +2083,11 @@ async function submitPedido() {
     ss.style.display = 'block';
     ss.style.removeProperty('display');
     ss.classList.add('show');
+    // Garante que o successScreen não está escondido pelo atualizarVisibilidade
+    ss.style.setProperty('display', 'block', 'important');
     document.getElementById('pedidoNumber').textContent = `Pedido: ${numeroPedido}`;
     document.querySelectorAll('.step-tab').forEach(t => { t.classList.remove('active'); t.classList.add('done'); });
-    // Mostra o container do formulário caso esteja escondido
-    document.querySelector('.steps-nav') && (document.querySelector('.steps-nav').style.display = '');
+    document.querySelector('.steps-nav') && (document.querySelector('.steps-nav').style.display = 'none');
 
   } catch (e) {
     document.getElementById('loadingOverlay').classList.remove('show');
@@ -2129,7 +2133,7 @@ function downloadPDF() {
   const WHITE   = [253, 250, 246];
   const TEXT    = [44, 24, 16];
 
-  const loja = (lojaUsuario && lojaUsuario.loja)
+  const loja = (lojaUsuario && lojaUsuario.tipo !== 'master' && lojaUsuario.loja)
     ? lojaUsuario.loja
     : (document.querySelector('input[name="loja"]:checked')?.value || '');
   const dataEntregaRaw = document.getElementById('dataEntrega').value;
