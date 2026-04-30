@@ -1788,9 +1788,11 @@ async function responderNotif(notifId, resposta) {
 
 // Esconde formulário quando logado (mostra área da loja)
 function atualizarVisibilidadeFormulario() {
-  const formEl = document.querySelectorAll('.section-card, #successScreen, .steps-nav');
   const lojaLogada = lojaUsuario && lojaAreaAtiva !== 'novo';
-  formEl.forEach(el => el.style.display = lojaLogada ? 'none' : '');
+  document.querySelectorAll('.section-card, .steps-nav').forEach(el => {
+    el.style.display = lojaLogada ? 'none' : '';
+  });
+  // Nunca esconde o successScreen — ele controla a própria visibilidade
 }
 
 function nextStep() {
@@ -2007,8 +2009,7 @@ async function submitPedido() {
     // Google Sheets — via iframe oculto (contorna CORS do Apps Script)
     enviarParaSheets(pedidoPayload);
 
-    // ── SUPABASE em background como backup ─────────────────
-    // Try to send to Supabase in background (non-blocking)
+    // ── SALVAR NO SUPABASE via client autenticado ────────────
     const pedidoPayload_sb = {
       pedido: {
         numero_pedido: numeroPedido,
@@ -2021,7 +2022,32 @@ async function submitPedido() {
       itens
     };
 
-    // Try Edge Function first, then direct REST as fallback — both non-blocking
+    // Tenta salvar via Supabase JS (usa sessão autenticada automaticamente)
+    sb.from('pedidos').insert([{
+      numero_pedido: numeroPedido,
+      loja: loja,
+      data_pedido: new Date().toISOString().split('T')[0],
+      data_entrega_prevista: dataEntrega,
+      status: 'pendente',
+      observacoes: obs || null,
+      criado_por: loja
+    }]).select().then(({ data: pedData, error: pedErr }) => {
+      if (!pedErr && pedData && pedData[0]) {
+        lastPedidoId = pedData[0].id;
+        if (itens.length > 0) {
+          const itensComId = itens.map(it => ({ ...it, pedido_id: lastPedidoId }));
+          sb.from('pedido_itens').insert(itensComId)
+            .then(({ error }) => {
+              if (error) console.warn('Itens não salvos:', error);
+              else console.log('Pedido salvo no Supabase:', numeroPedido);
+            });
+        }
+      } else {
+        console.warn('Erro ao salvar pedido no Supabase:', pedErr);
+      }
+    });
+
+    // Fallback via fetch REST com token de sessão
     fetch(`${SUPABASE_URL}/functions/v1/salvar-pedido`, {
       method: 'POST',
       headers: {
@@ -2037,12 +2063,15 @@ async function submitPedido() {
         console.log('Pedido salvo no Supabase via Edge Function:', numeroPedido);
       } else {
         // Fallback: try direct REST insert
+        // Usa sessão autenticada para salvar
+        const { data: { session } } = await sb.auth.getSession();
+        const authToken = session ? session.access_token : SUPABASE_KEY;
         return fetch(`${SUPABASE_URL}/rest/v1/pedidos`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Authorization': `Bearer ${authToken}`,
             'Prefer': 'return=representation'
           },
           body: JSON.stringify([pedidoPayload_sb.pedido])
@@ -2050,7 +2079,6 @@ async function submitPedido() {
           if (r2.ok) {
             const d = await r2.json();
             lastPedidoId = d[0]?.id;
-            // Insert itens
             if (itens.length > 0 && lastPedidoId) {
               const itensComId = itens.map(i => ({ ...i, pedido_id: lastPedidoId }));
               fetch(`${SUPABASE_URL}/rest/v1/pedido_itens`, {
@@ -2058,15 +2086,16 @@ async function submitPedido() {
                 headers: {
                   'Content-Type': 'application/json',
                   'apikey': SUPABASE_KEY,
-                  'Authorization': `Bearer ${SUPABASE_KEY}`,
+                  'Authorization': `Bearer ${authToken}`,
                   'Prefer': 'return=minimal'
                 },
                 body: JSON.stringify(itensComId)
               }).catch(e => console.warn('Itens não salvos:', e));
             }
-            console.log('Pedido salvo no Supabase via REST:', numeroPedido);
+            console.log('Pedido salvo no Supabase:', numeroPedido, 'id:', lastPedidoId);
           } else {
-            console.warn('Supabase indisponível — pedido salvo apenas localmente.');
+            const errText = await r2.text();
+            console.warn('Supabase REST falhou:', r2.status, errText);
           }
         });
       }
@@ -2074,10 +2103,18 @@ async function submitPedido() {
 
     // SUCCESS
     document.getElementById('loadingOverlay').classList.remove('show');
+    // Esconde áreas da loja e mostra tela de sucesso
+    document.querySelectorAll('.loja-area').forEach(a => a.classList.remove('show'));
     document.querySelectorAll('.section-card').forEach(c => c.classList.remove('active-section'));
-    document.getElementById('successScreen').classList.add('show');
+    // Garante que successScreen está visível mesmo com usuário logado
+    const ss = document.getElementById('successScreen');
+    ss.style.display = 'block';
+    ss.style.removeProperty('display');
+    ss.classList.add('show');
     document.getElementById('pedidoNumber').textContent = `Pedido: ${numeroPedido}`;
     document.querySelectorAll('.step-tab').forEach(t => { t.classList.remove('active'); t.classList.add('done'); });
+    // Mostra o container do formulário caso esteja escondido
+    document.querySelector('.steps-nav') && (document.querySelector('.steps-nav').style.display = '');
 
   } catch (e) {
     document.getElementById('loadingOverlay').classList.remove('show');
@@ -2371,7 +2408,13 @@ function downloadPDF() {
 // NEW PEDIDO
 // ============================================================
 function newPedido() {
-  location.reload();
+  // Esconde tela de sucesso
+  const ss = document.getElementById('successScreen');
+  ss.classList.remove('show');
+  ss.style.display = 'none';
+  // Volta para área da loja
+  mostrarArea('pedidos');
+  carregarHistorico();
 }
 
 // ============================================================
