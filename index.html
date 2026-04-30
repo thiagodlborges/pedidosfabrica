@@ -1730,7 +1730,7 @@ async function carregarHistorico() {
     tableHTML += '<td style="padding:12px 16px;font-size:0.82rem;font-weight:500">'+dataE+'</td>';
     tableHTML += '<td style="padding:12px 16px;font-size:0.82rem;color:var(--text-light)">'+itens.length+' itens</td>';
     tableHTML += '<td style="padding:12px 16px"><span style="display:inline-block;padding:3px 9px;border-radius:20px;font-size:0.68rem;font-weight:600;'+( stColors[st]||stColors.pendente)+'">'+( stLabels[st]||st)+'</span></td>';
-    tableHTML += '<td style="padding:12px 16px;text-align:center"><button onclick="gerarPDFHistorico('+p.id+')" title="Baixar PDF" style="background:none;border:1.5px solid var(--bordo);border-radius:6px;padding:5px 10px;cursor:pointer;color:var(--bordo);font-size:0.75rem;font-family:Jost,sans-serif;transition:all 0.15s" onmouseover="this.style.background='var(--bordo)';this.style.color='white'" onmouseout="this.style.background='none';this.style.color='var(--bordo)'">⬇ PDF</button></td>';
+    tableHTML += '<td style="padding:12px 16px;text-align:center"><button onclick="gerarPDFHistorico(' + p.id + ')" style="background:none;border:1.5px solid var(--bordo);border-radius:6px;padding:5px 10px;cursor:pointer;color:var(--bordo);font-size:0.75rem;font-family:Jost,sans-serif">⬇ PDF</button></td>';
     tableHTML += '</tr>';
   });
 
