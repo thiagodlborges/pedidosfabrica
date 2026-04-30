@@ -1014,6 +1014,63 @@
 .site-content { display: none; }
 .site-content.show { display: block; }
 
+
+/* ── MOBILE RESPONSIVE ─────────────────────────────────── */
+@media (max-width: 768px) {
+  header { padding: 14px 16px; }
+  .logo-img { height: 38px; }
+  .brand-sub { font-size: 0.6rem; }
+
+  .steps-nav { padding: 0 8px; overflow-x: auto; }
+  .step-tab { padding: 10px 12px; font-size: 0.65rem; }
+
+  main { padding: 16px 12px 60px; }
+  .section-body { padding: 16px 14px; }
+  .section-header { padding: 16px 18px; }
+
+  .loja-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .loja-option label { padding: 10px 10px; font-size: 0.8rem; }
+
+  .product-table th, .product-table td { padding: 8px 8px; font-size: 0.82rem; }
+  .qty-stepper { transform: scale(0.9); }
+
+  .nav-buttons { flex-wrap: wrap; gap: 10px; }
+  .btn-prev, .btn-next, .btn-submit { padding: 12px 20px; font-size: 0.78rem; }
+  .step-dots { flex: 1; justify-content: center; order: -1; width: 100%; }
+
+  /* Login screen mobile */
+  .login-card { padding: 36px 24px; margin: 16px; }
+  .login-logo-img { height: 44px; }
+
+  /* Loja bar mobile */
+  .loja-login-bar { flex-wrap: wrap; }
+  .loja-user-bar { flex-wrap: nowrap; overflow-x: auto; }
+  .loja-nav-btn { padding: 10px 10px; font-size: 0.65rem; white-space: nowrap; }
+  .loja-user-info { font-size: 0.7rem; padding: 10px 12px; min-width: 100px; }
+
+  /* History table mobile */
+  .loja-area { padding: 16px 10px 40px; }
+  table { font-size: 0.75rem; }
+  table th, table td { padding: 8px 8px; }
+  table th:nth-child(3), table td:nth-child(3) { display: none; } /* esconde data pedido */
+
+  /* Success screen mobile */
+  .success-screen { padding: 32px 20px; }
+  .success-title { font-size: 1.5rem; }
+  .download-cta { padding: 20px 16px; }
+
+  /* Notificacoes mobile */
+  .notif-card-header { flex-direction: column; gap: 8px; }
+  .notif-actions { padding: 0 12px 12px; }
+}
+
+@media (max-width: 480px) {
+  .loja-grid { grid-template-columns: 1fr; }
+  .product-table { font-size: 0.78rem; }
+  .section-title { font-size: 1.1rem; }
+  .login-card { padding: 28px 18px; }
+}
+
 </style>
 </head>
 <body>
@@ -1700,13 +1757,15 @@ async function carregarHistorico() {
   // Renderiza tabela de histórico
   const isMaster = ['master','master_loja'].includes(lojaUsuario.tipo);
   const stColors = {
-    pendente: 'background:#FFF3E0;color:#E07B39',
-    confirmado: 'background:#E8F5E9;color:#2D6A4F',
+    pendente_aprovacao: 'background:#FFF3E0;color:#E07B39',
+    aprovado: 'background:#E8F5E9;color:#2D6A4F',
+    confirmado: 'background:#E0F2F1;color:#00695C',
     separado: 'background:#E3F2FD;color:#2B6CB0',
     enviado: 'background:#F3E5F5;color:#6A1B9A',
-    rejeitado: 'background:#FFEBEE;color:#C1121F'
+    rejeitado: 'background:#FFEBEE;color:#C1121F',
+    cancelado: 'background:#ECEFF1;color:#546E7A'
   };
-  const stLabels = {pendente:'⏳ Pendente',confirmado:'✅ Confirmado',separado:'📦 Separação',enviado:'🚚 Enviado',rejeitado:'❌ Rejeitado'};
+  const stLabels = {pendente_aprovacao:'🕐 Aguard. Aprovação',aprovado:'✅ Aprovado',confirmado:'🏭 Confirmado',separado:'📦 Separação',enviado:'🚚 Enviado',rejeitado:'❌ Rejeitado',cancelado:'🚫 Cancelado'};
 
   let tableHTML = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;background:var(--white);border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(107,30,46,0.08)">';
   tableHTML += '<thead><tr style="background:var(--bordo-dark)">';
@@ -1722,7 +1781,7 @@ async function carregarHistorico() {
   pedidos.forEach((p, idx) => {
     const dataE = p.data_entrega_prevista ? new Date(p.data_entrega_prevista+'T12:00:00').toLocaleDateString('pt-BR') : '—';
     const dataP = p.data_pedido ? new Date(p.data_pedido+'T12:00:00').toLocaleDateString('pt-BR') : '—';
-    const st = p.status || 'pendente';
+    const st = p.status || 'pendente_aprovacao';
     const itens = (p.pedido_itens || []);
     const bg = idx % 2 === 0 ? 'var(--white)' : '#FAF6F0';
     tableHTML += '<tr style="background:'+bg+';border-bottom:1px solid var(--creme-dark)">';
@@ -1732,7 +1791,18 @@ async function carregarHistorico() {
     tableHTML += '<td style="padding:12px 16px;font-size:0.82rem;font-weight:500">'+dataE+'</td>';
     tableHTML += '<td style="padding:12px 16px;font-size:0.82rem;color:var(--text-light)">'+itens.length+' itens</td>';
     tableHTML += '<td style="padding:12px 16px"><span style="display:inline-block;padding:3px 9px;border-radius:20px;font-size:0.68rem;font-weight:600;'+( stColors[st]||stColors.pendente)+'">'+( stLabels[st]||st)+'</span></td>';
-    tableHTML += '<td style="padding:12px 16px;text-align:center"><button onclick="gerarPDFHistorico(' + p.id + ')" style="background:none;border:1.5px solid var(--bordo);border-radius:6px;padding:5px 10px;cursor:pointer;color:var(--bordo);font-size:0.75rem;font-family:Jost,sans-serif">⬇ PDF</button></td>';
+    // Botões de ação para master
+    let acoesMaster = '<button onclick="gerarPDFHistorico(' + p.id + ')" style="background:none;border:1.5px solid var(--bordo);border-radius:6px;padding:5px 8px;cursor:pointer;color:var(--bordo);font-size:0.7rem;font-family:Jost,sans-serif;margin:1px">⬇ PDF</button>';
+    if (['master','master_loja'].includes(lojaUsuario.tipo)) {
+      if (p.status === 'pendente_aprovacao') {
+        acoesMaster += '<button onclick="aprovarPedido(' + p.id + ')" style="background:#2D6A4F;border:none;border-radius:6px;padding:5px 8px;cursor:pointer;color:white;font-size:0.7rem;font-family:Jost,sans-serif;margin:1px">✓ Aprovar</button>';
+        acoesMaster += '<button onclick="rejeitarPedidoMaster(' + p.id + ')" style="background:#C1121F;border:none;border-radius:6px;padding:5px 8px;cursor:pointer;color:white;font-size:0.7rem;font-family:Jost,sans-serif;margin:1px">✗ Rejeitar</button>';
+      }
+      if (['pendente_aprovacao','rejeitado'].includes(p.status)) {
+        acoesMaster += '<button onclick="excluirPedido(' + p.id + ',\'' + (p.numero_pedido||'') + '\')" style="background:none;border:1.5px solid #999;border-radius:6px;padding:5px 8px;cursor:pointer;color:#666;font-size:0.7rem;font-family:Jost,sans-serif;margin:1px">🗑</button>';
+      }
+    }
+    tableHTML += '<td style="padding:8px 12px;text-align:center;white-space:nowrap">' + acoesMaster + '</td>';
     tableHTML += '</tr>';
   });
 
@@ -2047,7 +2117,7 @@ async function submitPedido() {
         loja: loja,
         data_pedido: new Date().toISOString().split('T')[0],
         data_entrega_prevista: dataEntrega,
-        status: 'pendente',
+        status: 'pendente_aprovacao',
         observacoes: obs || null,
         criado_por: loja
       }]).select();
@@ -2386,6 +2456,55 @@ function newPedido() {
   ss.style.display = 'none';
   mostrarArea('pedidos');
   carregarHistorico();
+}
+
+async function aprovarPedido(id) {
+  if (!confirm('Aprovar este pedido e enviar para a fábrica?')) return;
+  const { error } = await sb.from('pedidos').update({ status: 'aprovado' }).eq('id', id);
+  if (!error) {
+    // Notifica a loja
+    const p = (await sb.from('pedidos').select('loja,numero_pedido').eq('id',id).single()).data;
+    await sb.from('notificacoes').insert([{
+      pedido_id: id,
+      numero_pedido: p?.numero_pedido || '',
+      loja: p?.loja || '',
+      de: 'fabrica',
+      tipo: 'confirmacao',
+      titulo: 'Pedido Aprovado pela Gestão',
+      mensagem: 'Seu pedido foi aprovado e encaminhado para a fábrica.',
+      status_resposta: null
+    }]);
+    carregarHistorico();
+  }
+}
+
+async function rejeitarPedidoMaster(id) {
+  const motivo = prompt('Motivo da rejeição (será enviado ao gerente):');
+  if (motivo === null) return;
+  const { error } = await sb.from('pedidos').update({ status: 'rejeitado' }).eq('id', id);
+  if (!error) {
+    const p = (await sb.from('pedidos').select('loja,numero_pedido').eq('id',id).single()).data;
+    await sb.from('notificacoes').insert([{
+      pedido_id: id,
+      numero_pedido: p?.numero_pedido || '',
+      loja: p?.loja || '',
+      de: 'fabrica',
+      tipo: 'rejeicao',
+      titulo: 'Pedido Rejeitado pela Gestão',
+      mensagem: motivo || 'Pedido rejeitado sem motivo especificado.',
+      status_resposta: null
+    }]);
+    carregarHistorico();
+  }
+}
+
+async function excluirPedido(id, numeroPedido) {
+  if (!confirm('Excluir o pedido ' + numeroPedido + '? Esta ação não pode ser desfeita.')) return;
+  await sb.from('pedido_itens').delete().eq('pedido_id', id);
+  await sb.from('notificacoes').delete().eq('pedido_id', id);
+  const { error } = await sb.from('pedidos').delete().eq('id', id);
+  if (!error) carregarHistorico();
+  else alert('Erro ao excluir pedido.');
 }
 
 // Gera PDF a partir dos dados do histórico
