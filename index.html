@@ -695,6 +695,228 @@
     color: var(--marrom-dark);
     margin-left: 6px;
   }
+
+/* ── LOJA AUTH AREA ─────────────────────────────── */
+.loja-login-bar {
+  background: var(--white);
+  border-bottom: 1px solid var(--creme-dark);
+  padding: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+  position: sticky;
+  top: 64px;
+  z-index: 90;
+  box-shadow: 0 1px 8px rgba(44,24,16,0.06);
+}
+.loja-login-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bordo);
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-left: 1px solid var(--creme-dark);
+  transition: background 0.2s;
+}
+.loja-login-trigger:hover { background: var(--creme); }
+.loja-user-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+}
+.loja-user-info {
+  padding: 10px 20px;
+  font-size: 0.78rem;
+  color: var(--text-light);
+  flex: 1;
+}
+.loja-user-info strong { color: var(--bordo); }
+.loja-nav-btn {
+  padding: 10px 18px;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-left: 1px solid var(--creme-dark);
+  color: var(--text-light);
+  transition: all 0.15s;
+}
+.loja-nav-btn:hover { background: var(--creme); color: var(--bordo); }
+.loja-nav-btn.active { color: var(--bordo); background: var(--creme); font-weight: 600; }
+
+/* Login dropdown */
+.loja-login-dropdown {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(44,24,16,0.55);
+  z-index: 300;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding-top: 110px;
+  padding-right: 0;
+}
+.loja-login-dropdown.show { display: flex; }
+.loja-login-box {
+  background: var(--white);
+  border-radius: 12px 0 0 12px;
+  padding: 28px 28px;
+  width: 340px;
+  box-shadow: -8px 8px 40px rgba(44,24,16,0.2);
+  animation: slideInRight 0.2s ease;
+}
+@keyframes slideInRight { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.loja-login-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.4rem;
+  color: var(--bordo-dark);
+  margin-bottom: 4px;
+}
+.loja-login-sub { font-size: 0.78rem; color: var(--text-light); margin-bottom: 20px; }
+.ll-label { display: block; font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-light); margin-bottom: 6px; }
+.ll-input {
+  width: 100%; padding: 11px 14px; border: 1.5px solid var(--creme-dark); border-radius: 8px;
+  font-family: 'Jost', sans-serif; font-size: 0.9rem; color: var(--text); background: var(--white);
+  margin-bottom: 14px; transition: border-color 0.2s;
+}
+.ll-input:focus { outline: none; border-color: var(--bordo); }
+.ll-btn {
+  width: 100%; padding: 12px; background: var(--bordo); border: none; border-radius: 8px;
+  font-family: 'Jost', sans-serif; font-size: 0.82rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--creme); cursor: pointer;
+  transition: all 0.2s; margin-bottom: 8px;
+}
+.ll-btn:hover { background: var(--bordo-dark); }
+.ll-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.ll-error { font-size: 0.75rem; color: var(--red, #C1121F); text-align: center; display: none; }
+.ll-error.show { display: block; }
+
+/* ÁREA DA LOJA */
+.loja-area {
+  display: none;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 28px 24px 60px;
+}
+.loja-area.show { display: block; }
+
+.loja-section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.5rem;
+  color: var(--bordo-dark);
+  margin-bottom: 6px;
+}
+.loja-section-sub { font-size: 0.8rem; color: var(--text-light); margin-bottom: 24px; }
+
+/* Pedido histórico card */
+.hist-card {
+  background: var(--white);
+  border-radius: 10px;
+  border: 1.5px solid var(--creme-dark);
+  overflow: hidden;
+  margin-bottom: 12px;
+  transition: box-shadow 0.2s;
+}
+.hist-card:hover { box-shadow: 0 3px 16px rgba(107,30,46,0.1); }
+.hist-header {
+  display: grid;
+  grid-template-columns: 1fr 140px 130px 110px;
+  align-items: center;
+  padding: 14px 18px;
+  gap: 12px;
+  cursor: pointer;
+}
+.hist-num { font-size: 0.75rem; font-weight: 600; color: var(--bordo); letter-spacing: 0.05em; }
+.hist-date { font-size: 0.8rem; color: var(--text-light); }
+.hist-entrega { font-size: 0.83rem; font-weight: 600; color: var(--text); }
+.hist-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px; border-radius: 20px; font-size: 0.68rem; font-weight: 600;
+  letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap;
+}
+.hb-pendente { background: #FFF3E0; color: #E07B39; }
+.hb-confirmado { background: #E8F5E9; color: #2D6A4F; }
+.hb-separado { background: #E3F2FD; color: #2B6CB0; }
+.hb-enviado { background: #F3E5F5; color: #6A1B9A; }
+.hb-rejeitado { background: #FFEBEE; color: #C1121F; }
+
+.hist-detail { display: none; border-top: 1px solid var(--creme-dark); padding: 16px 18px; background: var(--creme); }
+.hist-detail.open { display: block; }
+
+/* Notificações */
+.notif-card {
+  background: var(--white);
+  border-radius: 10px;
+  border: 1.5px solid var(--creme-dark);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.notif-card.nao-lida { border-left: 4px solid var(--bordo); }
+.notif-card-header {
+  padding: 14px 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.notif-icon {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; flex-shrink: 0;
+}
+.ni-confirmacao { background: #E8F5E9; }
+.ni-rejeicao { background: #FFEBEE; }
+.ni-alteracao_data { background: #E3F2FD; }
+.ni-substituicao { background: #FFF8E1; }
+.ni-mensagem { background: var(--creme); }
+.notif-body { flex: 1; }
+.notif-titulo { font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+.notif-msg { font-size: 0.83rem; color: var(--text-light); line-height: 1.5; }
+.notif-meta { font-size: 0.7rem; color: var(--text-light); margin-top: 4px; }
+.notif-extra { font-size: 0.8rem; color: var(--bordo); font-weight: 500; margin-top: 4px; }
+
+/* Botões de resposta */
+.notif-actions {
+  padding: 0 18px 14px 68px;
+  display: flex;
+  gap: 10px;
+}
+.btn-aceitar {
+  padding: 8px 18px; background: var(--green, #2D6A4F); border: none; border-radius: 7px;
+  font-family: 'Jost', sans-serif; font-size: 0.78rem; font-weight: 600;
+  color: white; cursor: pointer; transition: all 0.2s;
+}
+.btn-aceitar:hover { background: #1B4332; }
+.btn-recusar {
+  padding: 8px 18px; background: none; border: 1.5px solid var(--red, #C1121F); border-radius: 7px;
+  font-family: 'Jost', sans-serif; font-size: 0.78rem; font-weight: 600;
+  color: var(--red, #C1121F); cursor: pointer; transition: all 0.2s;
+}
+.btn-recusar:hover { background: var(--red, #C1121F); color: white; }
+.resp-label {
+  padding: 6px 12px; border-radius: 20px; font-size: 0.72rem; font-weight: 600;
+  display: inline-block; margin: 0 18px 12px 68px;
+}
+.resp-aceito { background: #E8F5E9; color: #2D6A4F; }
+.resp-recusado { background: #FFEBEE; color: #C1121F; }
+
+.dot-novo {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--bordo); margin-left: 6px; vertical-align: middle;
+}
+
 </style>
 </head>
 <body>
@@ -726,6 +948,50 @@
 </div>
 
 <main>
+
+<!-- ── BARRA DE ACESSO DA LOJA ───────────────────────── -->
+<div class="loja-login-bar" id="lojaLoginBar">
+  <div class="loja-user-bar" id="lojaUserBar" style="display:none">
+    <div class="loja-user-info">Olá, <strong id="lojaUserNome"></strong> — <span id="lojaUserLoja"></span></div>
+    <button class="loja-nav-btn active" id="btnVerPedidos" onclick="mostrarArea('pedidos')">📋 Meus Pedidos</button>
+    <button class="loja-nav-btn" id="btnVerNotifs" onclick="mostrarArea('notifs')">
+      🔔 Notificações<span id="dotNovos" class="dot-novo" style="display:none"></span>
+    </button>
+    <button class="loja-nav-btn" onclick="mostrarArea('novo')">✏️ Novo Pedido</button>
+    <button class="loja-nav-btn" onclick="lojaLogout()">Sair</button>
+  </div>
+  <button class="loja-login-trigger" id="lojaLoginTrigger" onclick="toggleLoginDropdown()">
+    🔐 Área da Loja
+  </button>
+</div>
+
+<!-- Login dropdown -->
+<div class="loja-login-dropdown" id="lojaLoginDropdown" onclick="if(event.target===this)toggleLoginDropdown()">
+  <div class="loja-login-box">
+    <div class="loja-login-title">Área da Loja</div>
+    <div class="loja-login-sub">Entre com seu email e senha para ver seus pedidos e mensagens da fábrica.</div>
+    <label class="ll-label">Email</label>
+    <input type="email" class="ll-input" id="lojaEmail" placeholder="seu@email.com">
+    <label class="ll-label">Senha</label>
+    <input type="password" class="ll-input" id="lojaSenha" placeholder="••••••••" onkeydown="if(event.key==='Enter')lojaLogin()">
+    <button class="ll-btn" id="lojaLoginBtn" onclick="lojaLogin()">Entrar</button>
+    <div class="ll-error" id="lojaLoginError">Email ou senha incorretos.</div>
+  </div>
+</div>
+
+<!-- ── ÁREA LOGADA DA LOJA ─────────────────────────────── -->
+<div class="loja-area" id="lojaAreaPedidos">
+  <div class="loja-section-title">Meus Pedidos</div>
+  <div class="loja-section-sub">Histórico de pedidos desta loja, do mais recente ao mais antigo.</div>
+  <div id="histContainer"><div style="text-align:center;padding:32px;color:var(--text-light)">Carregando...</div></div>
+</div>
+
+<div class="loja-area" id="lojaAreaNotifs">
+  <div class="loja-section-title">Notificações & Mensagens</div>
+  <div class="loja-section-sub">Comunicações enviadas pela fábrica sobre seus pedidos.</div>
+  <div id="notifsContainer"><div style="text-align:center;padding:32px;color:var(--text-light)">Carregando...</div></div>
+</div>
+
   <div id="errorMsg" class="error-msg"></div>
 
   <!-- SECTION 0: IDENTIFICAÇÃO -->
@@ -962,6 +1228,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ============================================================
 // CONFIG SUPABASE
@@ -1106,8 +1373,265 @@ function removeOutro(id) {
 }
 
 // ============================================================
-// NAVIGATION
+// ÁREA DA LOJA — AUTH E HISTÓRICO
 // ============================================================
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let lojaUsuario = null;
+let lojaAreaAtiva = null;
+
+// Auto-login se sessão ativa
+sb.auth.getSession().then(({ data }) => {
+  if (data.session) verificarLojaUser(data.session.user);
+});
+
+function toggleLoginDropdown() {
+  document.getElementById('lojaLoginDropdown').classList.toggle('show');
+}
+
+async function lojaLogin() {
+  const email = document.getElementById('lojaEmail').value.trim();
+  const senha  = document.getElementById('lojaSenha').value;
+  const btn    = document.getElementById('lojaLoginBtn');
+  const err    = document.getElementById('lojaLoginError');
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  err.classList.remove('show');
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: senha });
+  if (error) {
+    err.classList.add('show');
+    btn.disabled = false; btn.textContent = 'Entrar';
+    return;
+  }
+  await verificarLojaUser(data.user);
+  btn.disabled = false; btn.textContent = 'Entrar';
+}
+
+async function verificarLojaUser(user) {
+  const { data: perfil } = await sb.from('perfis').select('*').eq('id', user.id).single();
+  if (!perfil || perfil.tipo !== 'loja') {
+    // Não é usuário de loja — não faz nada (pode ser fábrica)
+    return;
+  }
+  lojaUsuario = { ...user, nome: perfil.nome, loja: perfil.loja };
+  document.getElementById('lojaLoginDropdown').classList.remove('show');
+  document.getElementById('lojaLoginTrigger').style.display = 'none';
+  document.getElementById('lojaUserBar').style.display = 'flex';
+  document.getElementById('lojaUserNome').textContent = perfil.nome;
+  document.getElementById('lojaUserLoja').textContent = perfil.loja;
+  mostrarArea('pedidos');
+  verificarNotificacoesNovas();
+  atualizarVisibilidadeFormulario();
+}
+
+async function lojaLogout() {
+  await sb.auth.signOut();
+  lojaUsuario = null;
+  document.getElementById('lojaLoginTrigger').style.display = 'flex';
+  document.getElementById('lojaUserBar').style.display = 'none';
+  document.querySelectorAll('.loja-area').forEach(a => a.classList.remove('show'));
+  document.getElementById('section-0').closest('main').querySelectorAll('.section-card').forEach(s => {
+    if (s.id === 'section-0') s.classList.add('active-section');
+    else s.classList.remove('active-section');
+  });
+  currentStep = 0;
+}
+
+function mostrarArea(area) {
+  // Atualiza nav buttons
+  document.getElementById('btnVerPedidos').classList.toggle('active', area === 'pedidos');
+  document.getElementById('btnVerNotifs').classList.toggle('active', area === 'notifs');
+
+  // Mostra/esconde áreas
+  document.getElementById('lojaAreaPedidos').classList.toggle('show', area === 'pedidos');
+  document.getElementById('lojaAreaNotifs').classList.toggle('show', area === 'notifs');
+
+  // Esconde ou mostra o formulário de pedido
+  const formSections = document.querySelectorAll('.section-card, .steps-nav');
+  formSections.forEach(s => s.style.display = (area === 'novo' ? '' : 'none'));
+
+  // Se voltar para novo pedido, reinicia fluxo
+  if (area === 'novo') {
+    document.querySelectorAll('.section-card').forEach(s => s.classList.remove('active-section'));
+    document.getElementById('section-0').classList.add('active-section');
+    currentStep = 0;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+
+  lojaAreaAtiva = area;
+  if (area === 'pedidos') carregarHistorico();
+  if (area === 'notifs') { carregarNotificacoes(); marcarTodasLidas(); }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function verificarNotificacoesNovas() {
+  if (!lojaUsuario) return;
+  const { data } = await sb.from('notificacoes')
+    .select('id')
+    .eq('loja', lojaUsuario.loja)
+    .eq('lida', false)
+    .eq('de', 'fabrica');
+  const dot = document.getElementById('dotNovos');
+  dot.style.display = (data && data.length > 0) ? 'inline-block' : 'none';
+}
+
+async function marcarTodasLidas() {
+  if (!lojaUsuario) return;
+  await sb.from('notificacoes')
+    .update({ lida: true })
+    .eq('loja', lojaUsuario.loja)
+    .eq('de', 'fabrica');
+  document.getElementById('dotNovos').style.display = 'none';
+}
+
+// ── HISTÓRICO DE PEDIDOS ──────────────────────────────────
+async function carregarHistorico() {
+  const c = document.getElementById('histContainer');
+  c.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-light)">Carregando...</div>';
+
+  const { data: pedidos } = await sb.from('pedidos')
+    .select('*, pedido_itens(*)')
+    .eq('loja', lojaUsuario.loja)
+    .order('id', { ascending: false });
+
+  if (!pedidos || !pedidos.length) {
+    c.innerHTML = `<div style="text-align:center;padding:48px;color:var(--text-light)">
+      <div style="font-size:2rem;margin-bottom:8px">📋</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--bordo);margin-bottom:6px">Nenhum pedido encontrado</div>
+      <div>Clique em "Novo Pedido" para fazer seu primeiro pedido.</div>
+    </div>`;
+    return;
+  }
+
+  const statusLabel = { pendente:'⏳ Pendente', confirmado:'✅ Confirmado', separado:'📦 Em Separação', enviado:'🚚 Enviado', rejeitado:'❌ Rejeitado' };
+
+  c.innerHTML = pedidos.map(p => {
+    const dataE = p.data_entrega_prevista ? new Date(p.data_entrega_prevista+'T12:00:00').toLocaleDateString('pt-BR') : '—';
+    const dataP = p.data_pedido ? new Date(p.data_pedido+'T12:00:00').toLocaleDateString('pt-BR') : '—';
+    const st = p.status || 'pendente';
+    const itens = (p.pedido_itens || []);
+    const cats = {};
+    itens.forEach(item => {
+      const m = (item.observacao||'').match(/^\[(\w+)\]/);
+      const cat = m ? m[1] : 'Outro';
+      const nome = (item.observacao||'').replace(/^\[\w+\]\s*/,'');
+      if (!cats[cat]) cats[cat] = [];
+      cats[cat].push({ nome, qty: item.quantidade, un: item.unidade });
+    });
+    const catLabels = { Gelato:'🍦 Gelatos', Pote:'🥡 Potes', Confeitaria:'🎂 Confeitaria', Insumo:'📦 Insumos', Outro:'✏️ Outros' };
+    const itensHtml = Object.entries(catLabels).map(([k,l]) => {
+      if (!cats[k]||!cats[k].length) return '';
+      return `<div style="margin-bottom:10px">
+        <div style="font-size:0.7rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-light);margin-bottom:5px">${l}</div>
+        ${cats[k].map(i=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--creme-dark);font-size:0.85rem">
+          <span>${i.nome}</span><span style="font-weight:600;color:var(--bordo)">${i.qty} ${i.un}</span>
+        </div>`).join('')}
+      </div>`;
+    }).join('');
+
+    return `
+    <div class="hist-card">
+      <div class="hist-header" onclick="this.nextElementSibling.classList.toggle('open')">
+        <div><div class="hist-num">${p.numero_pedido||'#'+p.id}</div><div style="font-size:0.8rem;color:var(--text-light)">${itens.length} itens</div></div>
+        <div><div style="font-size:0.65rem;color:var(--text-light);text-transform:uppercase;margin-bottom:2px">Pedido em</div><div class="hist-date">${dataP}</div></div>
+        <div><div style="font-size:0.65rem;color:var(--text-light);text-transform:uppercase;margin-bottom:2px">Entrega</div><div class="hist-entrega">${dataE}</div></div>
+        <span class="hist-badge hb-${st}">${statusLabel[st]||st}</span>
+      </div>
+      <div class="hist-detail">
+        ${itensHtml}
+        ${p.observacoes ? `<div style="margin-top:10px;padding:10px;background:#FFF8EC;border:1px solid #E8C87A;border-radius:8px;font-size:0.82rem;color:#7A6010">💬 ${p.observacoes}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── NOTIFICAÇÕES DA FÁBRICA ───────────────────────────────
+async function carregarNotificacoes() {
+  const c = document.getElementById('notifsContainer');
+  c.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-light)">Carregando...</div>';
+
+  const { data: notifs } = await sb.from('notificacoes')
+    .select('*')
+    .eq('loja', lojaUsuario.loja)
+    .order('criado_em', { ascending: false });
+
+  if (!notifs || !notifs.length) {
+    c.innerHTML = `<div style="text-align:center;padding:48px;color:var(--text-light)">
+      <div style="font-size:2rem;margin-bottom:8px">🔔</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--bordo);margin-bottom:6px">Sem notificações</div>
+      <div>Quando a fábrica enviar mensagens sobre seus pedidos, elas aparecerão aqui.</div>
+    </div>`;
+    return;
+  }
+
+  const tipoIcon = { confirmacao:'✅', rejeicao:'❌', alteracao_data:'📅', substituicao:'🔄', mensagem:'💬', resposta:'↩️' };
+  const tipoLabel = { confirmacao:'Pedido Confirmado', rejeicao:'Pedido Rejeitado', alteracao_data:'Alteração de Data', substituicao:'Sugestão de Substituição', mensagem:'Mensagem da Fábrica', resposta:'Resposta da Loja' };
+
+  c.innerHTML = notifs.map(n => {
+    const naoLida = !n.lida && n.de === 'fabrica';
+    const dataFmt = new Date(n.criado_em).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+    const precisaResposta = ['alteracao_data','substituicao'].includes(n.tipo) && n.status_resposta === 'pendente' && n.de === 'fabrica';
+    const temResposta = n.status_resposta && n.status_resposta !== 'pendente';
+
+    const extraHtml = n.nova_data
+      ? `<div class="notif-extra">📅 Nova data proposta: ${new Date(n.nova_data+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'})}</div>` : '';
+    const subHtml = n.produto_substituto
+      ? `<div class="notif-extra">🔄 ${n.produto_original} → ${n.produto_substituto}</div>` : '';
+
+    const acoes = precisaResposta ? `
+      <div class="notif-actions">
+        <button class="btn-aceitar" onclick="responderNotif('${n.id}','aceito')">✓ Aceitar</button>
+        <button class="btn-recusar" onclick="responderNotif('${n.id}','recusado')">✗ Recusar</button>
+      </div>` : '';
+    const respostaLabel = temResposta
+      ? `<div class="resp-label resp-${n.status_resposta}">${n.status_resposta === 'aceito' ? '✓ Aceito pela loja' : '✗ Recusado pela loja'}</div>` : '';
+
+    return `
+    <div class="notif-card ${naoLida ? 'nao-lida' : ''}" id="notif-${n.id}">
+      <div class="notif-card-header">
+        <div class="notif-icon ni-${n.tipo}">${tipoIcon[n.tipo]||'📌'}</div>
+        <div class="notif-body">
+          <div class="notif-titulo">${n.titulo || tipoLabel[n.tipo] || n.tipo}</div>
+          <div class="notif-msg">${n.mensagem}</div>
+          ${extraHtml}${subHtml}
+          <div class="notif-meta">${n.numero_pedido} · ${dataFmt}</div>
+        </div>
+      </div>
+      ${acoes}${respostaLabel}
+    </div>`;
+  }).join('');
+}
+
+async function responderNotif(notifId, resposta) {
+  // Atualiza no banco
+  await sb.from('notificacoes').update({ status_resposta: resposta }).eq('id', notifId);
+
+  // Registra resposta da loja como nova mensagem
+  const notif = document.getElementById('notif-'+notifId);
+  const titulo = notif ? notif.querySelector('.notif-titulo')?.textContent : '';
+  await sb.from('notificacoes').insert([{
+    pedido_id: null,
+    numero_pedido: '',
+    loja: lojaUsuario.loja,
+    de: 'loja',
+    tipo: 'resposta',
+    titulo: `Resposta: ${titulo}`,
+    mensagem: resposta === 'aceito' ? 'A loja aceitou a proposta.' : 'A loja recusou a proposta.',
+    status_resposta: null
+  }]);
+
+  carregarNotificacoes();
+}
+
+// Esconde formulário quando logado (mostra área da loja)
+function atualizarVisibilidadeFormulario() {
+  const formEl = document.querySelectorAll('.section-card, #successScreen, .steps-nav');
+  const lojaLogada = lojaUsuario && lojaAreaAtiva !== 'novo';
+  formEl.forEach(el => el.style.display = lojaLogada ? 'none' : '');
+}
+
 function nextStep() {
   if (!validateStep(currentStep)) return;
   currentStep++;
