@@ -1587,6 +1587,11 @@ async function lojaLogout() {
 }
 
 function mostrarArea(area) {
+  // Esconde sempre a tela de sucesso ao navegar
+  const ss = document.getElementById('successScreen');
+  ss.classList.remove('show');
+  ss.style.display = 'none';
+
   // Atualiza nav buttons
   document.getElementById('btnVerPedidos').classList.toggle('active', area === 'pedidos');
   document.getElementById('btnVerNotifs').classList.toggle('active', area === 'notifs');
@@ -1669,44 +1674,47 @@ async function carregarHistorico() {
 
   const statusLabel = { pendente:'⏳ Pendente', confirmado:'✅ Confirmado', separado:'📦 Em Separação', enviado:'🚚 Enviado', rejeitado:'❌ Rejeitado' };
 
-  c.innerHTML = pedidos.map(p => {
+  // Renderiza tabela de histórico
+  const isMaster = lojaUsuario.tipo === 'master';
+  const stColors = {
+    pendente: 'background:#FFF3E0;color:#E07B39',
+    confirmado: 'background:#E8F5E9;color:#2D6A4F',
+    separado: 'background:#E3F2FD;color:#2B6CB0',
+    enviado: 'background:#F3E5F5;color:#6A1B9A',
+    rejeitado: 'background:#FFEBEE;color:#C1121F'
+  };
+  const stLabels = {pendente:'⏳ Pendente',confirmado:'✅ Confirmado',separado:'📦 Separação',enviado:'🚚 Enviado',rejeitado:'❌ Rejeitado'};
+
+  let tableHTML = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;background:var(--white);border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(107,30,46,0.08)">';
+  tableHTML += '<thead><tr style="background:var(--bordo-dark)">';
+  tableHTML += '<th style="padding:12px 16px;text-align:left;font-size:0.68rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--creme)">Nº Pedido</th>';
+  if (isMaster) tableHTML += '<th style="padding:12px 16px;text-align:left;font-size:0.68rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--creme)">Loja</th>';
+  tableHTML += '<th style="padding:12px 16px;text-align:left;font-size:0.68rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--creme)">Data do Pedido</th>';
+  tableHTML += '<th style="padding:12px 16px;text-align:left;font-size:0.68rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--creme)">Entrega Prevista</th>';
+  tableHTML += '<th style="padding:12px 16px;text-align:left;font-size:0.68rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--creme)">Itens</th>';
+  tableHTML += '<th style="padding:12px 16px;text-align:left;font-size:0.68rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--creme)">Status</th>';
+  tableHTML += '<th style="padding:12px 16px;text-align:center;font-size:0.68rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--creme)">PDF</th>';
+  tableHTML += '</tr></thead><tbody>';
+
+  pedidos.forEach((p, idx) => {
     const dataE = p.data_entrega_prevista ? new Date(p.data_entrega_prevista+'T12:00:00').toLocaleDateString('pt-BR') : '—';
     const dataP = p.data_pedido ? new Date(p.data_pedido+'T12:00:00').toLocaleDateString('pt-BR') : '—';
     const st = p.status || 'pendente';
     const itens = (p.pedido_itens || []);
-    const cats = {};
-    itens.forEach(item => {
-      const m = (item.observacao||'').match(/^\[(\w+)\]/);
-      const cat = m ? m[1] : 'Outro';
-      const nome = (item.observacao||'').replace(/^\[\w+\]\s*/,'');
-      if (!cats[cat]) cats[cat] = [];
-      cats[cat].push({ nome, qty: item.quantidade, un: item.unidade });
-    });
-    const catLabels = { Gelato:'🍦 Gelatos', Pote:'🥡 Potes', Confeitaria:'🎂 Confeitaria', Insumo:'📦 Insumos', Outro:'✏️ Outros' };
-    const itensHtml = Object.entries(catLabels).map(([k,l]) => {
-      if (!cats[k]||!cats[k].length) return '';
-      return `<div style="margin-bottom:10px">
-        <div style="font-size:0.7rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-light);margin-bottom:5px">${l}</div>
-        ${cats[k].map(i=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--creme-dark);font-size:0.85rem">
-          <span>${i.nome}</span><span style="font-weight:600;color:var(--bordo)">${i.qty} ${i.un}</span>
-        </div>`).join('')}
-      </div>`;
-    }).join('');
+    const bg = idx % 2 === 0 ? 'var(--white)' : '#FAF6F0';
+    tableHTML += '<tr style="background:'+bg+';border-bottom:1px solid var(--creme-dark)">';
+    tableHTML += '<td style="padding:12px 16px;font-size:0.82rem;font-weight:600;color:var(--bordo)">'+(p.numero_pedido||'#'+p.id)+'</td>';
+    if (isMaster) tableHTML += '<td style="padding:12px 16px;font-size:0.82rem">'+p.loja+'</td>';
+    tableHTML += '<td style="padding:12px 16px;font-size:0.82rem;color:var(--text-light)">'+dataP+'</td>';
+    tableHTML += '<td style="padding:12px 16px;font-size:0.82rem;font-weight:500">'+dataE+'</td>';
+    tableHTML += '<td style="padding:12px 16px;font-size:0.82rem;color:var(--text-light)">'+itens.length+' itens</td>';
+    tableHTML += '<td style="padding:12px 16px"><span style="display:inline-block;padding:3px 9px;border-radius:20px;font-size:0.68rem;font-weight:600;'+( stColors[st]||stColors.pendente)+'">'+( stLabels[st]||st)+'</span></td>';
+    tableHTML += '<td style="padding:12px 16px;text-align:center"><button onclick="gerarPDFHistorico('+p.id+')" title="Baixar PDF" style="background:none;border:1.5px solid var(--bordo);border-radius:6px;padding:5px 10px;cursor:pointer;color:var(--bordo);font-size:0.75rem;font-family:Jost,sans-serif;transition:all 0.15s" onmouseover="this.style.background='var(--bordo)';this.style.color='white'" onmouseout="this.style.background='none';this.style.color='var(--bordo)'">⬇ PDF</button></td>';
+    tableHTML += '</tr>';
+  });
 
-    return `
-    <div class="hist-card">
-      <div class="hist-header" onclick="this.nextElementSibling.classList.toggle('open')">
-        <div><div class="hist-num">${p.numero_pedido||'#'+p.id}</div><div style="font-size:0.8rem;color:var(--text-light)">${lojaUsuario.tipo==='master'?p.loja+' · ':''}${itens.length} itens</div></div>
-        <div><div style="font-size:0.65rem;color:var(--text-light);text-transform:uppercase;margin-bottom:2px">Pedido em</div><div class="hist-date">${dataP}</div></div>
-        <div><div style="font-size:0.65rem;color:var(--text-light);text-transform:uppercase;margin-bottom:2px">Entrega</div><div class="hist-entrega">${dataE}</div></div>
-        <span class="hist-badge hb-${st}">${statusLabel[st]||st}</span>
-      </div>
-      <div class="hist-detail">
-        ${itensHtml}
-        ${p.observacoes ? `<div style="margin-top:10px;padding:10px;background:#FFF8EC;border:1px solid #E8C87A;border-radius:8px;font-size:0.82rem;color:#7A6010">💬 ${p.observacoes}</div>` : ''}
-      </div>
-    </div>`;
-  }).join('');
+  tableHTML += '</tbody></table></div>';
+  c.innerHTML = tableHTML;
 }
 
 // ── NOTIFICAÇÕES DA FÁBRICA ───────────────────────────────
@@ -2408,13 +2416,104 @@ function downloadPDF() {
 // NEW PEDIDO
 // ============================================================
 function newPedido() {
-  // Esconde tela de sucesso
   const ss = document.getElementById('successScreen');
   ss.classList.remove('show');
   ss.style.display = 'none';
-  // Volta para área da loja
   mostrarArea('pedidos');
   carregarHistorico();
+}
+
+// Gera PDF a partir dos dados do histórico
+async function gerarPDFHistorico(pedidoId) {
+  const { data: p } = await sb.from('pedidos')
+    .select('*, pedido_itens(*)')
+    .eq('id', pedidoId)
+    .single();
+  if (!p) return;
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const W=210, BD=[44,18,32], B=[74,30,46], CR=[245,239,228], MA=[160,120,90], TX=[44,24,16];
+
+  const de = p.data_entrega_prevista
+    ? new Date(p.data_entrega_prevista+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})
+    : '—';
+  const dp = p.data_pedido
+    ? new Date(p.data_pedido+'T12:00:00').toLocaleDateString('pt-BR')
+    : new Date().toLocaleDateString('pt-BR');
+
+  doc.setFillColor(...BD); doc.rect(0,0,W,42,'F');
+  doc.setFillColor(...MA); doc.rect(0,38,W,2,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(18);
+  doc.setTextColor(...CR); doc.text('LUNA GELATO & CAFFÈ',18,17);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8);
+  doc.setTextColor(...MA); doc.text('ORDEM DE SEPARAÇÃO E ENVIO',18,23);
+  doc.setFillColor(...CR); doc.roundedRect(18,26,64,8,2,2,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(8);
+  doc.setTextColor(...BD); doc.text('Nº '+(p.numero_pedido||'#'+p.id),21,31.5);
+
+  let y=50;
+  doc.setFillColor(255,255,255); doc.setDrawColor(...CR); doc.setLineWidth(0.5);
+  doc.roundedRect(14,y,W-28,28,3,3,'FD');
+  doc.setFillColor(...B); doc.roundedRect(14,y,3,28,1.5,1.5,'F');
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...MA);
+  doc.text('LOJA',22,y+8); doc.text('DATA DO PEDIDO',110,y+8);
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...TX);
+  doc.text(p.loja,22,y+15); doc.setFontSize(9); doc.text(dp,110,y+15);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...MA);
+  doc.text('ENTREGA PREVISTA',22,y+21);
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...B);
+  doc.text(de.charAt(0).toUpperCase()+de.slice(1),22,y+27);
+  y+=36;
+
+  const cats={Gelato:'GELATOS — CAIXAS',Pote:'POTES FECHADOS',Confeitaria:'CONFEITARIA',Insumo:'INSUMOS & UNIFORMES',Outro:'OUTROS ITENS'};
+  const grupos={};
+  (p.pedido_itens||[]).forEach(item=>{
+    const m=(item.observacao||'').match(/^\[(\w+)\]/);
+    const cat=m?m[1]:'Outro';
+    const nome=(item.observacao||'').replace(/^\[\w+\]\s*/,'');
+    if(!grupos[cat])grupos[cat]=[];
+    grupos[cat].push([nome,item.quantidade+'',item.unidade||'','☐']);
+  });
+
+  Object.entries(cats).forEach(([k,l])=>{
+    if(!grupos[k]||!grupos[k].length) return;
+    doc.setFillColor(...B); doc.roundedRect(14,y,W-28,9,2,2,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...CR);
+    doc.text(l,20,y+6.3); y+=11;
+    doc.autoTable({
+      startY:y, margin:{left:14,right:14},
+      head:[['Produto','Qtd.','Unidade','✓ Separado']],
+      body:grupos[k], theme:'plain',
+      styles:{font:'helvetica',fontSize:8.5,cellPadding:{top:4,bottom:4,left:4,right:4},textColor:TX,lineColor:[237,228,212],lineWidth:0.3},
+      headStyles:{fillColor:CR,textColor:MA,fontSize:7,fontStyle:'bold',lineWidth:0},
+      columnStyles:{0:{cellWidth:'auto'},1:{cellWidth:18,halign:'center',fontStyle:'bold',textColor:B},2:{cellWidth:22,halign:'center'},3:{cellWidth:24,halign:'center'}},
+      alternateRowStyles:{fillColor:[252,249,245]}
+    });
+    y=doc.lastAutoTable.finalY+7;
+  });
+
+  if(p.observacoes){
+    doc.setFillColor(255,252,240); doc.setDrawColor(232,200,122); doc.setLineWidth(0.4);
+    doc.roundedRect(14,y,W-28,18,3,3,'FD');
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(122,96,16);
+    doc.text('OBSERVAÇÕES',19,y+7);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...TX);
+    doc.text(doc.splitTextToSize(p.observacoes,W-46),19,y+13);
+    y+=22;
+  }
+
+  const sigY=Math.max(y+10,245);
+  doc.setDrawColor(...MA); doc.setLineWidth(0.5);
+  doc.line(14,sigY+14,90,sigY+14); doc.line(110,sigY+14,W-14,sigY+14);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...MA);
+  doc.text('Responsável pela Separação',14,sigY+18);
+  doc.text('Responsável pelo Envio / Conferência',110,sigY+18);
+  doc.setFillColor(...BD); doc.rect(0,287,W,10,'F');
+  doc.setFontSize(6.5); doc.setTextColor(...MA);
+  doc.text('Luna Gelato & Caffè  —  '+new Date().toLocaleDateString('pt-BR'),14,293);
+  doc.text('Pág. 1/1',W-14,293,{align:'right'});
+  doc.save('ordem-'+(p.numero_pedido||p.id)+'.pdf');
 }
 
 // ============================================================
