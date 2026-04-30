@@ -1354,6 +1354,9 @@ const SUPABASE_URL = 'https://pbuhwpcpdcnaheaywmdv.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBidWh3cGNwZGNuYWhlYXl3bWR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNjU5MzksImV4cCI6MjA5MTg0MTkzOX0.Mg4PVg96ZiV3C2Rn0GLQU9c7ui_41OlU6Ldqn5jcvyY';
 const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyd4bMJ2QRIu82NEInOF-fl95gTqLBWY1_Uu7ERQaT9pr2Rz1u1BYhm59sTMnphUrCa/exec';
 
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
 // ============================================================
 // PRODUCTS DATA
 // ============================================================
@@ -1518,8 +1521,6 @@ function mostrarSite() {
 // ============================================================
 // ÁREA DA LOJA — AUTH E HISTÓRICO
 // ============================================================
-const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let lojaUsuario = null;
 let lojaAreaAtiva = null;
@@ -1552,21 +1553,41 @@ async function lojaLogin() {
 }
 
 async function verificarLojaUser(user) {
-  const { data: perfil } = await sb.from('perfis').select('*').eq('id', user.id).single();
-  if (!perfil || !['loja','master'].includes(perfil.tipo)) {
-    // Não é usuário de loja/master — não faz nada (pode ser fábrica)
-    return;
+  try {
+    const { data: perfil, error: perfErr } = await sb.from('perfis').select('*').eq('id', user.id).single();
+
+    if (perfErr) {
+      console.error('Erro ao buscar perfil:', perfErr);
+      // Mostra erro descritivo
+      const err = document.getElementById('lsError');
+      if (err) { err.textContent = 'Erro ao carregar perfil. Tente novamente.'; err.classList.add('show'); }
+      return;
+    }
+
+    if (!perfil || !['loja','master'].includes(perfil.tipo)) {
+      // Usuário existe mas não é loja/master (ex: fábrica) — redireciona
+      const err = document.getElementById('lsError');
+      if (err) { err.textContent = 'Este acesso é exclusivo para usuários de loja.'; err.classList.add('show'); }
+      await sb.auth.signOut();
+      return;
+    }
+
+    lojaUsuario = { ...user, nome: perfil.nome, loja: perfil.loja || 'Todas as lojas', tipo: perfil.tipo };
+    mostrarSite();
+    document.getElementById('lojaLoginDropdown').classList.remove('show');
+    document.getElementById('lojaLoginTrigger').style.display = 'none';
+    document.getElementById('lojaUserBar').style.display = 'flex';
+    document.getElementById('lojaUserNome').textContent = perfil.nome;
+    document.getElementById('lojaUserLoja').textContent = perfil.loja || 'Todas as lojas';
+    mostrarArea('pedidos');
+    verificarNotificacoesNovas();
+    atualizarVisibilidadeFormulario();
+
+  } catch(e) {
+    console.error('Erro em verificarLojaUser:', e);
+    const err = document.getElementById('lsError');
+    if (err) { err.textContent = 'Erro de conexão. Verifique sua internet.'; err.classList.add('show'); }
   }
-  lojaUsuario = { ...user, nome: perfil.nome, loja: perfil.loja, tipo: perfil.tipo };
-  mostrarSite();
-  document.getElementById('lojaLoginDropdown').classList.remove('show');
-  document.getElementById('lojaLoginTrigger').style.display = 'none';
-  document.getElementById('lojaUserBar').style.display = 'flex';
-  document.getElementById('lojaUserNome').textContent = perfil.nome;
-  document.getElementById('lojaUserLoja').textContent = perfil.loja;
-  mostrarArea('pedidos');
-  verificarNotificacoesNovas();
-  atualizarVisibilidadeFormulario();
 }
 
 async function lojaLogout() {
