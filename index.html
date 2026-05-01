@@ -629,6 +629,23 @@
     gap: 6px;
   }
 
+  /* DATA LOTADA */
+  .date-lotada-aviso {
+    display: none;
+    font-size: 0.78rem;
+    color: #b33000;
+    background: #fff3ee;
+    border: 1px solid #f5c4a8;
+    border-radius: 6px;
+    padding: 7px 11px;
+    margin-top: 8px;
+    gap: 6px;
+    align-items: center;
+  }
+  .date-lotada-aviso.show {
+    display: flex;
+  }
+
   /* ERROR */
   .error-msg {
     background: #FEE;
@@ -1296,6 +1313,10 @@
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M7 4v3l2 2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
           A entrega mínima é de <strong id="minDateText">3 dias úteis</strong> a partir de hoje.
         </div>
+        <div class="date-lotada-aviso" id="dataLotadaAviso">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.4"/><path d="M7 4.5v3M7 9.5v.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          Esta data já atingiu o limite de 2 entregas agendadas. Por favor, escolha outra data.
+        </div>
       </div>
 
       <div class="nav-buttons">
@@ -1560,6 +1581,7 @@ const totalSteps = 7;
 // ============================================================
 window.addEventListener('DOMContentLoaded', () => {
   setMinDate();
+  carregarDatasLotadas();
   buildTable('gelato-body', gelatos, 'gelato', 'caixas');
   buildTable('potes-body', potes, 'pote', 'unid.');
   buildTable('confeitaria-body', confeitaria, 'confeitaria', 'unid.');
@@ -1574,6 +1596,62 @@ function setMinDate() {
   dateInput.min = iso;
   dateInput.value = iso;
   document.getElementById('minDateText').textContent = formatDate(minDate);
+}
+
+// ============================================================
+// LIMITE DE AGENDAMENTOS POR DIA (máx. 2)
+// ============================================================
+let datasLotadas = new Set(); // datas no formato 'YYYY-MM-DD' com 2+ pedidos
+
+async function carregarDatasLotadas() {
+  try {
+    const hoje = new Date().toISOString().split('T')[0];
+    // Usa fetch direto (padrão do projeto) em vez do cliente sb
+    // Exclui cancelado e rejeitado — esses liberam a vaga
+    const url = `${SUPABASE_URL}/rest/v1/pedidos?select=data_entrega_prevista&data_entrega_prevista=gte.${hoje}&status=neq.cancelado&status=neq.rejeitado`;
+    const res = await fetch(url, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      }
+    });
+
+    if (!res.ok) { console.warn('Erro ao carregar datas lotadas:', res.status); return; }
+
+    const data = await res.json();
+
+    // Conta quantos pedidos há por data
+    const contagem = {};
+    (data || []).forEach(p => {
+      const d = p.data_entrega_prevista;
+      if (d) contagem[d] = (contagem[d] || 0) + 1;
+    });
+
+    // Datas com 2 ou mais pedidos ficam bloqueadas
+    datasLotadas = new Set(Object.entries(contagem).filter(([, n]) => n >= 2).map(([d]) => d));
+
+    // Aplica listener no input de data para mostrar aviso em tempo real
+    const dateInput = document.getElementById('dataEntrega');
+    dateInput.addEventListener('change', verificarDataLotada);
+
+    // Verifica já para o valor padrão
+    verificarDataLotada();
+  } catch(e) {
+    console.warn('Exceção ao carregar datas lotadas:', e);
+  }
+}
+
+function verificarDataLotada() {
+  const dateInput = document.getElementById('dataEntrega');
+  const aviso = document.getElementById('dataLotadaAviso');
+  const val = dateInput.value;
+  if (val && datasLotadas.has(val)) {
+    aviso.classList.add('show');
+    dateInput.style.borderColor = '#b33000';
+  } else {
+    aviso.classList.remove('show');
+    dateInput.style.borderColor = '';
+  }
 }
 
 function addBusinessDays(date, days) {
@@ -2153,6 +2231,7 @@ function validateStep(step) {
     const minDate = addBusinessDays(new Date(), 3);
     minDate.setHours(0,0,0,0);
     if (chosen < minDate) { showError('A data de entrega deve ser ao menos 3 dias úteis a partir de hoje.'); return false; }
+    if (datasLotadas.has(data)) { showError('Esta data já atingiu o limite de 2 entregas agendadas. Por favor, escolha outra data.'); return false; }
   }
   return true;
 }
