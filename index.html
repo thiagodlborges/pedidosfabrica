@@ -629,23 +629,6 @@
     gap: 6px;
   }
 
-  /* DATA LOTADA */
-  .date-lotada-aviso {
-    display: none;
-    font-size: 0.78rem;
-    color: #b33000;
-    background: #fff3ee;
-    border: 1px solid #f5c4a8;
-    border-radius: 6px;
-    padding: 7px 11px;
-    margin-top: 8px;
-    gap: 6px;
-    align-items: center;
-  }
-  .date-lotada-aviso.show {
-    display: flex;
-  }
-
   /* ERROR */
   .error-msg {
     background: #FEE;
@@ -890,6 +873,73 @@
   margin-bottom: 6px;
 }
 .loja-section-sub { font-size: 0.8rem; color: var(--text-light); margin-bottom: 24px; }
+
+  /* RANKING */
+  .rank-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 24px;
+    align-items: flex-end;
+  }
+  .rank-filter-group { display: flex; flex-direction: column; gap: 4px; }
+  .rank-filter-label { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-light); }
+  .rank-select {
+    padding: 8px 12px;
+    border: 1.5px solid var(--creme-dark);
+    border-radius: 8px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text);
+    background: var(--white);
+    cursor: pointer;
+  }
+  .rank-select:focus { outline: none; border-color: var(--bordo); }
+  .rank-btn {
+    padding: 8px 18px;
+    background: var(--bordo);
+    color: var(--creme);
+    border: none;
+    border-radius: 8px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    align-self: flex-end;
+    transition: opacity 0.2s;
+  }
+  .rank-btn:hover { opacity: 0.85; }
+  .rank-categoria-block { margin-bottom: 32px; }
+  .rank-categoria-titulo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.15rem;
+    color: var(--bordo);
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1.5px solid var(--creme-dark);
+  }
+  .rank-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--creme-dark);
+  }
+  .rank-pos {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--bordo);
+    min-width: 22px;
+    text-align: right;
+  }
+  .rank-pos-medal { font-size: 1.1rem; min-width: 22px; text-align: center; }
+  .rank-nome { flex: 1; font-size: 0.88rem; color: var(--text); }
+  .rank-bar-wrap { width: 120px; background: var(--creme-dark); border-radius: 4px; height: 8px; overflow: hidden; }
+  .rank-bar { height: 100%; background: var(--bordo); border-radius: 4px; transition: width 0.4s; }
+  .rank-qty { font-size: 0.82rem; font-weight: 600; color: var(--text-light); min-width: 60px; text-align: right; }
+  .rank-empty { text-align: center; padding: 40px; color: var(--text-light); font-size: 0.9rem; }
 
 /* Pedido histórico card */
 .hist-card {
@@ -1238,6 +1288,7 @@
     <button class="loja-nav-btn" id="btnVerNotifs" onclick="mostrarArea('notifs')">
       🔔 Notificações<span id="dotNovos" class="dot-novo" style="display:none"></span>
     </button>
+    <button class="loja-nav-btn" id="btnVerRanking" style="display:none" onclick="mostrarArea('ranking')">🏆 Ranking</button>
     <button class="loja-nav-btn" onclick="mostrarArea('novo')">✏️ Novo Pedido</button>
     <button class="loja-nav-btn" onclick="lojaLogout()">Sair</button>
   </div>
@@ -1271,6 +1322,45 @@
   <div class="loja-section-title">Notificações & Mensagens</div>
   <div class="loja-section-sub">Comunicações enviadas pela fábrica sobre seus pedidos.</div>
   <div id="notifsContainer"><div style="text-align:center;padding:32px;color:var(--text-light)">Carregando...</div></div>
+</div>
+
+<div class="loja-area" id="lojaAreaRanking">
+  <div class="loja-section-title">🏆 Ranking de Itens Mais Pedidos</div>
+  <div class="loja-section-sub">Veja os itens mais solicitados por categoria, filtrados por loja e período.</div>
+
+  <div class="rank-filters">
+    <div class="rank-filter-group">
+      <span class="rank-filter-label">Loja</span>
+      <select class="rank-select" id="rankFiltroLoja">
+        <option value="">Todas as lojas</option>
+        <option value="Esplanada">Esplanada</option>
+        <option value="Cianê">Cianê</option>
+        <option value="Tucuruvi">Tucuruvi</option>
+        <option value="Indaiatuba">Indaiatuba</option>
+        <option value="Jundiaí">Jundiaí</option>
+        <option value="Praça da Moça - Diadema">Praça da Moça – Diadema</option>
+        <option value="Buriti Mogi Guaçu">Buriti Mogi Guaçu</option>
+        <option value="SP Market">SP Market</option>
+        <option value="Iguatemi Campinas">Iguatemi Campinas</option>
+        <option value="Shopping Itaquera">Shopping Itaquera</option>
+        <option value="Atrium">Atrium</option>
+      </select>
+    </div>
+    <div class="rank-filter-group">
+      <span class="rank-filter-label">Período</span>
+      <select class="rank-select" id="rankFiltroPeriodo">
+        <option value="">Todo o período</option>
+        <option value="7">Últimos 7 dias</option>
+        <option value="30">Últimos 30 dias</option>
+        <option value="90">Últimos 90 dias</option>
+        <option value="180">Últimos 6 meses</option>
+        <option value="365">Último ano</option>
+      </select>
+    </div>
+    <button class="rank-btn" onclick="carregarRanking()">Aplicar</button>
+  </div>
+
+  <div id="rankingContainer"><div class="rank-empty">Selecione os filtros e clique em Aplicar.</div></div>
 </div>
 
   <div id="errorMsg" class="error-msg"></div>
@@ -1312,10 +1402,6 @@
         <div class="date-info">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M7 4v3l2 2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
           A entrega mínima é de <strong id="minDateText">3 dias úteis</strong> a partir de hoje.
-        </div>
-        <div class="date-lotada-aviso" id="dataLotadaAviso">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.4"/><path d="M7 4.5v3M7 9.5v.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-          Esta data já atingiu o limite de 2 entregas agendadas. Por favor, escolha outra data.
         </div>
       </div>
 
@@ -1581,7 +1667,6 @@ const totalSteps = 7;
 // ============================================================
 window.addEventListener('DOMContentLoaded', () => {
   setMinDate();
-  carregarDatasLotadas();
   buildTable('gelato-body', gelatos, 'gelato', 'caixas');
   buildTable('potes-body', potes, 'pote', 'unid.');
   buildTable('confeitaria-body', confeitaria, 'confeitaria', 'unid.');
@@ -1596,62 +1681,6 @@ function setMinDate() {
   dateInput.min = iso;
   dateInput.value = iso;
   document.getElementById('minDateText').textContent = formatDate(minDate);
-}
-
-// ============================================================
-// LIMITE DE AGENDAMENTOS POR DIA (máx. 2)
-// ============================================================
-let datasLotadas = new Set(); // datas no formato 'YYYY-MM-DD' com 2+ pedidos
-
-async function carregarDatasLotadas() {
-  try {
-    const hoje = new Date().toISOString().split('T')[0];
-    // Usa fetch direto (padrão do projeto) em vez do cliente sb
-    // Exclui cancelado e rejeitado — esses liberam a vaga
-    const url = `${SUPABASE_URL}/rest/v1/pedidos?select=data_entrega_prevista&data_entrega_prevista=gte.${hoje}&status=neq.cancelado&status=neq.rejeitado`;
-    const res = await fetch(url, {
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`
-      }
-    });
-
-    if (!res.ok) { console.warn('Erro ao carregar datas lotadas:', res.status); return; }
-
-    const data = await res.json();
-
-    // Conta quantos pedidos há por data
-    const contagem = {};
-    (data || []).forEach(p => {
-      const d = p.data_entrega_prevista;
-      if (d) contagem[d] = (contagem[d] || 0) + 1;
-    });
-
-    // Datas com 2 ou mais pedidos ficam bloqueadas
-    datasLotadas = new Set(Object.entries(contagem).filter(([, n]) => n >= 2).map(([d]) => d));
-
-    // Aplica listener no input de data para mostrar aviso em tempo real
-    const dateInput = document.getElementById('dataEntrega');
-    dateInput.addEventListener('change', verificarDataLotada);
-
-    // Verifica já para o valor padrão
-    verificarDataLotada();
-  } catch(e) {
-    console.warn('Exceção ao carregar datas lotadas:', e);
-  }
-}
-
-function verificarDataLotada() {
-  const dateInput = document.getElementById('dataEntrega');
-  const aviso = document.getElementById('dataLotadaAviso');
-  const val = dateInput.value;
-  if (val && datasLotadas.has(val)) {
-    aviso.classList.add('show');
-    dateInput.style.borderColor = '#b33000';
-  } else {
-    aviso.classList.remove('show');
-    dateInput.style.borderColor = '';
-  }
 }
 
 function addBusinessDays(date, days) {
@@ -1925,6 +1954,9 @@ async function verificarLojaUser(user) {
     document.getElementById('lojaUserBar').style.display = 'flex';
     document.getElementById('lojaUserNome').textContent = perfil.nome;
     document.getElementById('lojaUserLoja').textContent = perfil.loja || 'Todas as lojas';
+    // Mostra botão de ranking só para master e master_loja
+    const isMasterTipo = ['master','master_loja'].includes(perfil.tipo);
+    document.getElementById('btnVerRanking').style.display = isMasterTipo ? '' : 'none';
     mostrarArea('pedidos');
     verificarNotificacoesNovas();
     atualizarVisibilidadeFormulario();
@@ -1945,6 +1977,7 @@ async function lojaLogout() {
   document.getElementById('lsSenha').value = '';
   document.getElementById('lojaLoginTrigger').style.display = 'flex';
   document.getElementById('lojaUserBar').style.display = 'none';
+  document.getElementById('btnVerRanking').style.display = 'none';
   document.querySelectorAll('.loja-area').forEach(a => a.classList.remove('show'));
   document.getElementById('section-0').closest('main').querySelectorAll('.section-card').forEach(s => {
     if (s.id === 'section-0') s.classList.add('active-section');
@@ -1962,10 +1995,12 @@ function mostrarArea(area) {
   // Atualiza nav buttons
   document.getElementById('btnVerPedidos').classList.toggle('active', area === 'pedidos');
   document.getElementById('btnVerNotifs').classList.toggle('active', area === 'notifs');
+  document.getElementById('btnVerRanking').classList.toggle('active', area === 'ranking');
 
   // Mostra/esconde áreas
   document.getElementById('lojaAreaPedidos').classList.toggle('show', area === 'pedidos');
   document.getElementById('lojaAreaNotifs').classList.toggle('show', area === 'notifs');
+  document.getElementById('lojaAreaRanking').classList.toggle('show', area === 'ranking');
 
   // Esconde ou mostra o formulário de pedido
   const formSections = document.querySelectorAll('.section-card, .steps-nav');
@@ -2000,7 +2035,101 @@ function mostrarArea(area) {
   lojaAreaAtiva = area;
   if (area === 'pedidos') carregarHistorico();
   if (area === 'notifs') { carregarNotificacoes(); marcarTodasLidas(); }
+  if (area === 'ranking') carregarRanking();
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── RANKING DE ITENS MAIS PEDIDOS ──────────────────────────
+async function carregarRanking() {
+  const container = document.getElementById('rankingContainer');
+  container.innerHTML = '<div class="rank-empty">⏳ Carregando ranking...</div>';
+
+  const filtroLoja    = document.getElementById('rankFiltroLoja').value;
+  const filtroPeriodo = document.getElementById('rankFiltroPeriodo').value;
+
+  try {
+    // Busca pedidos com itens, aplicando filtros
+    let query = sb.from('pedidos')
+      .select('id, loja, data_pedido, pedido_itens(quantidade, observacao)')
+      .not('status', 'eq', 'cancelado')
+      .not('status', 'eq', 'rejeitado');
+
+    if (filtroLoja)    query = query.eq('loja', filtroLoja);
+    if (filtroPeriodo) {
+      const dataCorte = new Date();
+      dataCorte.setDate(dataCorte.getDate() - parseInt(filtroPeriodo));
+      query = query.gte('data_pedido', dataCorte.toISOString().split('T')[0]);
+    }
+
+    const { data: pedidos, error } = await query;
+    if (error) throw error;
+
+    if (!pedidos || !pedidos.length) {
+      container.innerHTML = '<div class="rank-empty">Nenhum pedido encontrado para os filtros selecionados.</div>';
+      return;
+    }
+
+    // Agrega quantidades por categoria e produto
+    const categorias = {};
+    const catOrder = ['Gelato', 'Pote', 'Confeitaria', 'Insumo', 'Outro'];
+    const catEmoji = { Gelato: '🍦', Pote: '🥡', Confeitaria: '🎂', Insumo: '📦', Outro: '✏️' };
+
+    pedidos.forEach(pedido => {
+      (pedido.pedido_itens || []).forEach(item => {
+        const obs = item.observacao || '';
+        const match = obs.match(/^\[([^\]]+)\]\s*(.+)$/);
+        const cat   = match ? match[1] : 'Outro';
+        const nome  = match ? match[2].trim() : obs;
+        const qty   = Number(item.quantidade) || 0;
+        if (!qty) return;
+
+        if (!categorias[cat]) categorias[cat] = {};
+        categorias[cat][nome] = (categorias[cat][nome] || 0) + qty;
+      });
+    });
+
+    // Monta HTML do ranking
+    const cats = catOrder.filter(c => categorias[c]);
+    // Adiciona categorias não previstas no order
+    Object.keys(categorias).forEach(c => { if (!cats.includes(c)) cats.push(c); });
+
+    if (!cats.length) {
+      container.innerHTML = '<div class="rank-empty">Nenhum item encontrado para os filtros selecionados.</div>';
+      return;
+    }
+
+    const medals = ['🥇','🥈','🥉'];
+    let html = '';
+
+    cats.forEach(cat => {
+      const itens = categorias[cat];
+      const sorted = Object.entries(itens).sort((a, b) => b[1] - a[1]);
+      const max = sorted[0][1];
+
+      html += `<div class="rank-categoria-block">
+        <div class="rank-categoria-titulo">${catEmoji[cat] || '📦'} ${cat}</div>`;
+
+      sorted.forEach(([nome, qty], i) => {
+        const pct   = Math.round((qty / max) * 100);
+        const medal = i < 3 ? `<span class="rank-pos-medal">${medals[i]}</span>` : `<span class="rank-pos">${i+1}</span>`;
+        const unidade = cat === 'Gelato' ? 'cx.' : 'un.';
+        html += `<div class="rank-item">
+          ${medal}
+          <span class="rank-nome">${nome}</span>
+          <div class="rank-bar-wrap"><div class="rank-bar" style="width:${pct}%"></div></div>
+          <span class="rank-qty">${qty} ${unidade}</span>
+        </div>`;
+      });
+
+      html += '</div>';
+    });
+
+    container.innerHTML = html;
+
+  } catch(e) {
+    console.warn('Erro ao carregar ranking:', e);
+    container.innerHTML = '<div class="rank-empty">Erro ao carregar ranking. Tente novamente.</div>';
+  }
 }
 
 async function verificarNotificacoesNovas() {
@@ -2231,7 +2360,6 @@ function validateStep(step) {
     const minDate = addBusinessDays(new Date(), 3);
     minDate.setHours(0,0,0,0);
     if (chosen < minDate) { showError('A data de entrega deve ser ao menos 3 dias úteis a partir de hoje.'); return false; }
-    if (datasLotadas.has(data)) { showError('Esta data já atingiu o limite de 2 entregas agendadas. Por favor, escolha outra data.'); return false; }
   }
   return true;
 }
