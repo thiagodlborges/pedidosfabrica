@@ -2469,6 +2469,26 @@ async function submitPedido() {
       ? lojaUsuario.loja
       : document.querySelector('input[name="loja"]:checked')?.value;
     const dataEntrega = document.getElementById('dataEntrega').value;
+
+    // ── VERIFICAÇÃO: máximo 2 pedidos por loja por dia ──────────
+    // Masters não têm restrição de limite
+    if (loja && !['master','master_loja'].includes(lojaUsuario?.tipo)) {
+      const hoje = new Date().toISOString().split('T')[0];
+      const { count, error: countErr } = await sb.from('pedidos')
+        .select('id', { count: 'exact', head: true })
+        .eq('loja', loja)
+        .eq('data_pedido', hoje)
+        .not('status', 'eq', 'cancelado');
+
+      if (!countErr && count >= 2) {
+        alert('Limite atingido: já foram realizados 2 pedidos hoje para esta loja. Novos pedidos só poderão ser feitos amanhã.');
+        btn.disabled = false;
+        document.getElementById('loadingOverlay').classList.remove('show');
+        return;
+      }
+    }
+    // ────────────────────────────────────────────────────────────
+
     const obs = document.getElementById('observacoes').value.trim();
 
     // Generate numero_pedido
