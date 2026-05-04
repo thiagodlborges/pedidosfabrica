@@ -2288,16 +2288,17 @@ async function responderNotif(notifId, resposta) {
   // Atualiza no banco
   await sb.from('notificacoes').update({ status_resposta: resposta }).eq('id', notifId);
 
-  // Registra resposta da loja como nova mensagem
-  const notif = document.getElementById('notif-'+notifId);
-  const titulo = notif ? notif.querySelector('.notif-titulo')?.textContent : '';
+  // Busca dados da notificação original para montar resposta correta
+  const { data: notifOriginal } = await sb.from('notificacoes').select('pedido_id,numero_pedido').eq('id', notifId).single();
+
+  // Registra resposta da loja como nova mensagem visível para a fábrica
   await sb.from('notificacoes').insert([{
-    pedido_id: null,
-    numero_pedido: '',
+    pedido_id: notifOriginal?.pedido_id || null,
+    numero_pedido: notifOriginal?.numero_pedido || '',
     loja: lojaUsuario.loja,
     de: 'loja',
     tipo: 'resposta',
-    titulo: `Resposta: ${titulo}`,
+    titulo: resposta === 'aceito' ? 'Loja aceitou a proposta' : 'Loja recusou a proposta',
     mensagem: resposta === 'aceito' ? 'A loja aceitou a proposta.' : 'A loja recusou a proposta.',
     status_resposta: null
   }]);
@@ -2886,7 +2887,7 @@ async function aprovarPedido(id) {
       pedido_id: id,
       numero_pedido: p?.numero_pedido || '',
       loja: p?.loja || '',
-      de: 'fabrica',
+      de: 'master',
       tipo: 'confirmacao',
       titulo: 'Pedido Aprovado pela Gestão',
       mensagem: 'Seu pedido foi aprovado e encaminhado para a fábrica.',
@@ -2906,7 +2907,7 @@ async function rejeitarPedidoMaster(id) {
       pedido_id: id,
       numero_pedido: p?.numero_pedido || '',
       loja: p?.loja || '',
-      de: 'fabrica',
+      de: 'master',
       tipo: 'rejeicao',
       titulo: 'Pedido Rejeitado pela Gestão',
       mensagem: motivo || 'Pedido rejeitado sem motivo especificado.',
