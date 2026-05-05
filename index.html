@@ -2474,6 +2474,7 @@ async function submitPedido() {
 
     // ── VERIFICAÇÃO: máximo 2 pedidos por data de entrega por loja ──
     // Masters não têm restrição de limite
+    alert(`[DEBUG] tipo: ${lojaUsuario?.tipo} | loja: ${loja} | dataEntrega: ${dataEntrega}`);
     if (loja && dataEntrega && !['master','master_loja'].includes(lojaUsuario?.tipo)) {
       const { count, error: countErr } = await sb.from('pedidos')
         .select('id', { count: 'exact', head: true })
@@ -2481,7 +2482,7 @@ async function submitPedido() {
         .eq('data_entrega_prevista', dataEntrega)
         .not('status', 'in', '("cancelado","rejeitado")');
 
-      console.log(`[Limite] Loja: ${loja} | Entrega: ${dataEntrega} | Pedidos: ${count} | Erro: ${countErr?.message}`);
+      alert(`[DEBUG] count: ${count} | erro: ${countErr?.message}`);
 
       if (!countErr && count >= 2) {
         alert('Limite atingido: já existem 2 pedidos para esta data de entrega. Escolha outra data ou entre em contato com a gestão.');
