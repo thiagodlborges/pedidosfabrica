@@ -2472,36 +2472,25 @@ async function submitPedido() {
       : document.querySelector('input[name="loja"]:checked')?.value;
     const dataEntrega = document.getElementById('dataEntrega').value;
 
-    // ── VERIFICAÇÃO: máximo 2 pedidos por loja por dia ──────────
+    // ── VERIFICAÇÃO: máximo 2 pedidos por data de entrega por loja ──
     // Masters não têm restrição de limite
-    if (loja && !['master','master_loja'].includes(lojaUsuario?.tipo)) {
-      // Usa horário de Brasília (UTC-3) para calcular início/fim do dia
-      const agora = new Date();
-      const offsetBrasilia = -3 * 60;
-      const brasiliaMs = agora.getTime() + (agora.getTimezoneOffset() + offsetBrasilia) * 60000;
-      const brasilia = new Date(brasiliaMs);
-      const inicioDia = new Date(brasilia.getFullYear(), brasilia.getMonth(), brasilia.getDate(), 0, 0, 0);
-      const fimDia    = new Date(brasilia.getFullYear(), brasilia.getMonth(), brasilia.getDate(), 23, 59, 59);
-      const inicioUTC = new Date(inicioDia.getTime() - offsetBrasilia * 60000).toISOString();
-      const fimUTC    = new Date(fimDia.getTime()    - offsetBrasilia * 60000).toISOString();
-
+    if (loja && dataEntrega && !['master','master_loja'].includes(lojaUsuario?.tipo)) {
       const { count, error: countErr } = await sb.from('pedidos')
         .select('id', { count: 'exact', head: true })
         .eq('loja', loja)
-        .gte('created_at', inicioUTC)
-        .lte('created_at', fimUTC)
+        .eq('data_entrega_prevista', dataEntrega)
         .not('status', 'in', '("cancelado","rejeitado")');
 
-      console.log(`[Limite] Loja: ${loja} | Pedidos hoje: ${count} | Erro: ${countErr?.message}`);
+      console.log(`[Limite] Loja: ${loja} | Entrega: ${dataEntrega} | Pedidos: ${count} | Erro: ${countErr?.message}`);
 
       if (!countErr && count >= 2) {
-        alert('Limite atingido: já foram realizados 2 pedidos hoje para esta loja. Novos pedidos só poderão ser feitos amanhã.');
+        alert('Limite atingido: já existem 2 pedidos para esta data de entrega. Escolha outra data ou entre em contato com a gestão.');
         btn.disabled = false;
         document.getElementById('loadingOverlay').classList.remove('show');
         return;
       }
     }
-    // ────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────
 
     const obs = document.getElementById('observacoes').value.trim();
 
