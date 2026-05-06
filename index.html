@@ -1674,13 +1674,63 @@ window.addEventListener('DOMContentLoaded', () => {
   addOutroItem();
 });
 
-function setMinDate() {
+// Datas globalmente lotadas (2+ pedidos)
+let datasBloqueadas = [];
+
+async function setMinDate() {
   const minDate = addBusinessDays(new Date(), 3);
   const iso = minDate.toISOString().split('T')[0];
   const dateInput = document.getElementById('dataEntrega');
   dateInput.min = iso;
-  dateInput.value = iso;
   document.getElementById('minDateText').textContent = formatDate(minDate);
+
+  // Busca datas com 2 ou mais pedidos (bloqueadas globalmente)
+  await carregarDatasBloqueadas(iso);
+
+  // Define valor inicial como primeiro dia disponível
+  let dataInicial = iso;
+  while (datasBloqueadas.includes(dataInicial)) {
+    const d = new Date(dataInicial + 'T00:00:00');
+    d.setDate(d.getDate() + 1);
+    dataInicial = d.toISOString().split('T')[0];
+  }
+  dateInput.value = dataInicial;
+
+  // Bloqueia seleção de datas cheias ao mudar
+  dateInput.addEventListener('change', function() {
+    if (datasBloqueadas.includes(this.value)) {
+      showError('Esta data já atingiu o limite de 2 pedidos. Por favor, escolha outra data.');
+      this.value = dataInicial;
+    }
+  });
+}
+
+async function carregarDatasBloqueadas(minIso) {
+  try {
+    // Busca contagem de pedidos por data de entrega (excluindo cancelados e rejeitados)
+    const { data, error } = await sb.from('pedidos')
+      .select('data_entrega_prevista')
+      .gte('data_entrega_prevista', minIso)
+      .not('status', 'in', '("cancelado","rejeitado")');
+
+    if (error || !data) return;
+
+    // Conta pedidos por data
+    const contagem = {};
+    data.forEach(p => {
+      if (!p.data_entrega_prevista) return;
+      contagem[p.data_entrega_prevista] = (contagem[p.data_entrega_prevista] || 0) + 1;
+    });
+
+    // Datas com 2 ou mais pedidos ficam bloqueadas
+    datasBloqueadas = Object.entries(contagem)
+      .filter(([, cnt]) => cnt >= 2)
+      .map(([dt]) => dt);
+
+    console.log('[Datas bloqueadas]', datasBloqueadas);
+  } catch(e) {
+    console.error('Erro ao carregar datas bloqueadas:', e);
+  }
 }
 
 function addBusinessDays(date, days) {
@@ -2363,6 +2413,7 @@ function validateStep(step) {
     const minDate = addBusinessDays(new Date(), 3);
     minDate.setHours(0,0,0,0);
     if (chosen < minDate) { showError('A data de entrega deve ser ao menos 3 dias úteis a partir de hoje.'); return false; }
+    if (datasBloqueadas.includes(data)) { showError('Esta data já atingiu o limite de 2 pedidos. Por favor, escolha outra data.'); return false; }
   }
   return true;
 }
@@ -2472,20 +2523,24 @@ async function submitPedido() {
       : document.querySelector('input[name="loja"]:checked')?.value;
     const dataEntrega = document.getElementById('dataEntrega').value;
 
-    // ── VERIFICAÇÃO: máximo 2 pedidos por data de entrega por loja ──
+    // ── VERIFICAÇÃO: máximo 2 pedidos por data de entrega (global) ──
     // Masters não têm restrição de limite
-    alert(`[DEBUG] tipo: ${lojaUsuario?.tipo} | loja: ${loja} | dataEntrega: ${dataEntrega}`);
-    if (loja && dataEntrega && !['master','master_loja'].includes(lojaUsuario?.tipo)) {
-      const { count, error: countErr } = await sb.from('pedidos')
-        .select('id', { count: 'exact', head: true })
-        .eq('loja', loja)
+    if (dataEntrega && !['master','master_loja'].includes(lojaUsuario?.tipo)) {
+      // Checa se a data está na lista de bloqueadas (carregada ao abrir o formulário)
+      // ou faz uma verificação direta no banco como fallback
+      if (datasBloqueadas.includes(dataEntrega)) {
+        showError('Esta data já atingiu o limite de 2 pedidos. Por favor, escolha outra data.');
+        btn.disabled = false;
+        document.getElementById('loadingOverlay').classList.remove('show');
+        return;
+      }
+      // Fallback: verifica direto no banco
+      const { data: pedidosDia } = await sb.from('pedidos')
+        .select('id')
         .eq('data_entrega_prevista', dataEntrega)
         .not('status', 'in', '("cancelado","rejeitado")');
-
-      alert(`[DEBUG] count: ${count} | erro: ${countErr?.message}`);
-
-      if (!countErr && count >= 2) {
-        alert('Limite atingido: já existem 2 pedidos para esta data de entrega. Escolha outra data ou entre em contato com a gestão.');
+      if (pedidosDia && pedidosDia.length >= 2) {
+        showError('Esta data já atingiu o limite de 2 pedidos. Por favor, escolha outra data.');
         btn.disabled = false;
         document.getElementById('loadingOverlay').classList.remove('show');
         return;
