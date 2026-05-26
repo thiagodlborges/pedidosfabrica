@@ -1668,7 +1668,11 @@ const totalSteps = 7;
 window.addEventListener('DOMContentLoaded', async () => {
   setMinDate();
   // Busca sabores ativos do Supabase (catálogo dinâmico)
-  const gelatos = await carregarGelatosCatalogo();
+  // IMPORTANTE: atualiza a variável GLOBAL gelatos para que getQtyList,
+  // addItens e getRows usem a mesma ordem que foi renderizada na tabela
+  const gelatosDoBanco = await carregarGelatosCatalogo();
+  gelatos.length = 0;
+  gelatosDoBanco.forEach(s => gelatos.push(s));
   buildTable('gelato-body', gelatos, 'gelato', 'caixas');
   buildTable('potes-body', potes, 'pote', 'unid.');
   buildTable('confeitaria-body', confeitaria, 'confeitaria', 'unid.');
