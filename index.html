@@ -1787,19 +1787,28 @@ function formatDate(d) {
   return d.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long' });
 }
 
+// Produtos que só podem ser pedidos em múltiplos de uma quantidade fixa
+// (ex.: Petit Gateau é enviado em caixas de 6). Chave = nome EXATO do produto.
+const MULTIPLOS = { 'Petit Gateau': 6 };
+
 function buildTable(tbodyId, items, prefix, unit) {
   const tbody = document.getElementById(tbodyId);
   items.forEach((item, i) => {
     const nome = typeof item === 'string' ? item : item.nome;
     const un = typeof item === 'string' ? unit : item.un;
+    const mult = MULTIPLOS[nome] || 1;
+    const multBadge = mult > 1
+      ? `<span class="badge" style="background:rgba(122,30,46,0.12);color:var(--bordo,#7a1f2e)">de ${mult} em ${mult}</span>`
+      : '';
     tbody.innerHTML += `
       <tr>
-        <td>${nome}<span class="badge">${un}</span></td>
+        <td>${nome}<span class="badge">${un}</span>${multBadge}</td>
         <td>
           <div class="qty-stepper">
-            <button class="qty-btn" onclick="changeQty('${prefix}-${i}', -1)">−</button>
-            <input class="qty-input" type="number" id="${prefix}-${i}" value="0" min="0" max="999">
-            <button class="qty-btn" onclick="changeQty('${prefix}-${i}', 1)">+</button>
+            <button class="qty-btn" onclick="changeQty('${prefix}-${i}', -1, ${mult})">−</button>
+            <input class="qty-input" type="number" id="${prefix}-${i}" value="0" min="0" max="999"
+              step="${mult}" data-mult="${mult}"${mult > 1 ? ` onchange="snapInput('${prefix}-${i}')"` : ''}>
+            <button class="qty-btn" onclick="changeQty('${prefix}-${i}', 1, ${mult})">+</button>
           </div>
         </td>
       </tr>`;
@@ -1810,10 +1819,31 @@ function buildInsumosTable() {
   buildTable('insumos-body', insumos, 'insumo', '');
 }
 
-function changeQty(id, delta) {
+// Arredonda para o múltiplo mais próximo (qualquer quantidade > 0 vira ao
+// menos 1 múltiplo, para nunca permitir uma caixa parcial).
+function snapMultiple(val, mult) {
+  if (mult <= 1) return Math.max(0, val);
+  if (val <= 0) return 0;
+  let snapped = Math.round(val / mult) * mult;
+  if (snapped < mult) snapped = mult;
+  return snapped;
+}
+
+// Corrige a digitação manual: ao sair do campo, ajusta para múltiplo válido.
+function snapInput(id) {
   const input = document.getElementById(id);
-  const val = parseInt(input.value) || 0;
-  input.value = Math.max(0, val + delta);
+  if (!input) return;
+  const mult = parseInt(input.dataset.mult) || 1;
+  input.value = snapMultiple(parseInt(input.value) || 0, mult);
+}
+
+function changeQty(id, delta, mult = 1) {
+  const input = document.getElementById(id);
+  const step = Math.max(1, mult);
+  let val = (parseInt(input.value) || 0) + delta * step;
+  val = Math.max(0, val);
+  if (mult > 1) val = snapMultiple(val, mult);
+  input.value = val;
 }
 
 // ============================================================
@@ -2471,7 +2501,7 @@ function getQtyList(items, prefix) {
   return items.map((item, i) => {
     const nome = typeof item === 'string' ? item : item.nome;
     const un = typeof item === 'string' ? '' : item.un;
-    const qty = parseInt(document.getElementById(`${prefix}-${i}`)?.value) || 0;
+    const qty = snapMultiple(parseInt(document.getElementById(`${prefix}-${i}`)?.value) || 0, MULTIPLOS[nome] || 1);
     return { nome, un, qty };
   }).filter(x => x.qty > 0);
 }
@@ -2601,7 +2631,7 @@ async function submitPedido() {
       items.forEach((item, i) => {
         const nome = typeof item === 'string' ? item : item.nome;
         const un = typeof item === 'string' ? 'unidade' : item.un;
-        const qty = parseInt(document.getElementById(`${prefix}-${i}`)?.value) || 0;
+        const qty = snapMultiple(parseInt(document.getElementById(`${prefix}-${i}`)?.value) || 0, MULTIPLOS[nome] || 1);
         if (qty > 0) {
           itens.push({
             produto_id: null,
@@ -2892,7 +2922,7 @@ function downloadPDF() {
     items.forEach((item, i) => {
       const nome = typeof item === 'string' ? item : item.nome;
       const un   = typeof item === 'string' ? 'caixas' : item.un;
-      const qty  = parseInt(document.getElementById(`${prefix}-${i}`)?.value) || 0;
+      const qty  = snapMultiple(parseInt(document.getElementById(`${prefix}-${i}`)?.value) || 0, MULTIPLOS[nome] || 1);
       if (qty > 0) result.push([nome, qty.toString(), un, '☐']);
     });
     return result;
