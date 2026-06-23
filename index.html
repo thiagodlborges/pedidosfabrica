@@ -911,6 +911,13 @@
     transition: opacity 0.2s;
   }
   .rank-btn:hover { opacity: 0.85; }
+  .rank-btn-ghost {
+    background: var(--white);
+    color: var(--bordo);
+    border: 1.5px solid var(--bordo);
+  }
+  .rank-btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; border-color: var(--creme-dark); color: var(--text-light); }
+  input.rank-select[type=date] { cursor: text; }
   .rank-categoria-block { margin-bottom: 32px; }
   .rank-categoria-titulo {
     font-family: 'Cormorant Garamond', serif;
@@ -1326,7 +1333,7 @@
 
 <div class="loja-area" id="lojaAreaRanking">
   <div class="loja-section-title">🏆 Ranking de Itens Mais Pedidos</div>
-  <div class="loja-section-sub">Veja os itens mais solicitados por categoria, filtrados por loja e período.</div>
+  <div class="loja-section-sub">Veja os itens mais solicitados por categoria, filtrados por loja e período. Use o período personalizado para definir um intervalo de datas e exporte em PDF ou CSV.</div>
 
   <div class="rank-filters">
     <div class="rank-filter-group">
@@ -1348,16 +1355,27 @@
     </div>
     <div class="rank-filter-group">
       <span class="rank-filter-label">Período</span>
-      <select class="rank-select" id="rankFiltroPeriodo">
+      <select class="rank-select" id="rankFiltroPeriodo" onchange="toggleRankPeriodo()">
         <option value="">Todo o período</option>
         <option value="7">Últimos 7 dias</option>
         <option value="30">Últimos 30 dias</option>
         <option value="90">Últimos 90 dias</option>
         <option value="180">Últimos 6 meses</option>
         <option value="365">Último ano</option>
+        <option value="custom">Personalizado (intervalo)</option>
       </select>
     </div>
+    <div class="rank-filter-group" id="rankGrupoDe" style="display:none">
+      <span class="rank-filter-label">De</span>
+      <input type="date" class="rank-select" id="rankDataIni">
+    </div>
+    <div class="rank-filter-group" id="rankGrupoAte" style="display:none">
+      <span class="rank-filter-label">Até</span>
+      <input type="date" class="rank-select" id="rankDataFim">
+    </div>
     <button class="rank-btn" onclick="carregarRanking()">Aplicar</button>
+    <button class="rank-btn rank-btn-ghost" id="btnRankPDF" onclick="exportarRankingPDF()" disabled>⬇ PDF</button>
+    <button class="rank-btn rank-btn-ghost" id="btnRankCSV" onclick="exportarRankingCSV()" disabled>⬇ CSV</button>
   </div>
 
   <div id="rankingContainer"><div class="rank-empty">Selecione os filtros e clique em Aplicar.</div></div>
@@ -1787,16 +1805,23 @@ function formatDate(d) {
   return d.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long' });
 }
 
-// Produtos que só podem ser pedidos em múltiplos de uma quantidade fixa
-// (ex.: Petit Gateau é enviado em caixas de 6). Chave = nome EXATO do produto.
+// Produtos que só podem ser pedidos em múltiplos de uma quantidade fixa.
+// MULTIPLOS        → por NOME exato do produto (ex.: Petit Gateau, caixa de 6).
+// MULTIPLOS_CATEGORIA → por categoria/prefixo (ex.: todos os Potes, de 12 em 12).
+// Regra por nome tem prioridade sobre a regra por categoria.
 const MULTIPLOS = { 'Petit Gateau': 6 };
+const MULTIPLOS_CATEGORIA = { pote: 12 };
+
+function multiploDe(nome, prefix) {
+  return MULTIPLOS[nome] || MULTIPLOS_CATEGORIA[prefix] || 1;
+}
 
 function buildTable(tbodyId, items, prefix, unit) {
   const tbody = document.getElementById(tbodyId);
   items.forEach((item, i) => {
     const nome = typeof item === 'string' ? item : item.nome;
     const un = typeof item === 'string' ? unit : item.un;
-    const mult = MULTIPLOS[nome] || 1;
+    const mult = multiploDe(nome, prefix);
     const multBadge = mult > 1
       ? `<span class="badge" style="background:rgba(122,30,46,0.12);color:var(--bordo,#7a1f2e)">de ${mult} em ${mult}</span>`
       : '';
@@ -2159,57 +2184,104 @@ function mostrarArea(area) {
 }
 
 // ── RANKING DE ITENS MAIS PEDIDOS ──────────────────────────
+let ultimoRanking = null; // guarda o último ranking calculado (para exportar)
+
+const RANK_CAT_ORDER = ['Gelato', 'Pote', 'Confeitaria', 'Insumo', 'Outro'];
+const RANK_CAT_EMOJI = { Gelato: '🍦', Pote: '🥡', Confeitaria: '🎂', Insumo: '📦', Outro: '✏️' };
+
+function toggleRankPeriodo() {
+  const custom = document.getElementById('rankFiltroPeriodo').value === 'custom';
+  document.getElementById('rankGrupoDe').style.display  = custom ? '' : 'none';
+  document.getElementById('rankGrupoAte').style.display = custom ? '' : 'none';
+}
+
+function fmtDataBR(iso) {
+  if (!iso) return '';
+  const [a, m, d] = iso.split('-');
+  return `${d}/${m}/${a}`;
+}
+
+// Constrói um resolvedor que mapeia qualquer nome (antigo) para o nome atual,
+// seguindo a cadeia de renomeações (A→B→C). Mesmo produto = mesmo grupo.
+function construirResolverRenome(renomeacoes) {
+  const norm = s => (s || '').trim().toLowerCase();
+  const next = {};
+  (renomeacoes || []).forEach(r => { next[norm(r.nome_antigo)] = r.nome_novo; });
+  return function resolve(nome) {
+    let atual = nome, i = 0;
+    while (next[norm(atual)] && i++ < 50) atual = next[norm(atual)];
+    return atual;
+  };
+}
+
 async function carregarRanking() {
   const container = document.getElementById('rankingContainer');
   container.innerHTML = '<div class="rank-empty">⏳ Carregando ranking...</div>';
+  document.getElementById('btnRankPDF').disabled = true;
+  document.getElementById('btnRankCSV').disabled = true;
+  ultimoRanking = null;
 
   const filtroLoja    = document.getElementById('rankFiltroLoja').value;
   const filtroPeriodo = document.getElementById('rankFiltroPeriodo').value;
 
   try {
-    // Busca pedidos com itens, aplicando filtros
     let query = sb.from('pedidos')
       .select('id, loja, data_pedido, pedido_itens(quantidade, observacao)')
       .not('status', 'eq', 'cancelado')
       .not('status', 'eq', 'rejeitado');
 
-    if (filtroLoja)    query = query.eq('loja', filtroLoja);
-    if (filtroPeriodo) {
+    if (filtroLoja) query = query.eq('loja', filtroLoja);
+
+    // Período: presets em dias OU intervalo personalizado por datas
+    let periodoLabel = 'Todo o período';
+    if (filtroPeriodo === 'custom') {
+      const dIni = document.getElementById('rankDataIni').value || null;
+      const dFim = document.getElementById('rankDataFim').value || null;
+      if (dIni && dFim && dIni > dFim) {
+        container.innerHTML = '<div class="rank-empty">A data inicial não pode ser maior que a final.</div>';
+        return;
+      }
+      if (dIni) query = query.gte('data_pedido', dIni);
+      if (dFim) query = query.lte('data_pedido', dFim);
+      if (dIni || dFim) periodoLabel = `${dIni ? fmtDataBR(dIni) : 'início'} até ${dFim ? fmtDataBR(dFim) : 'hoje'}`;
+    } else if (filtroPeriodo) {
       const dataCorte = new Date();
       dataCorte.setDate(dataCorte.getDate() - parseInt(filtroPeriodo));
       query = query.gte('data_pedido', dataCorte.toISOString().split('T')[0]);
+      periodoLabel = `Últimos ${filtroPeriodo} dias`;
     }
 
-    const { data: pedidos, error } = await query;
-    if (error) throw error;
+    // Busca pedidos e o mapa de renomeações em paralelo
+    const [pedidosRes, renomeacoesRes] = await Promise.all([
+      query,
+      sb.from('catalogo_renomeacoes').select('nome_antigo, nome_novo')
+    ]);
+    if (pedidosRes.error) throw pedidosRes.error;
+    const pedidos = pedidosRes.data;
+    const resolve = construirResolverRenome(renomeacoesRes.data);
 
     if (!pedidos || !pedidos.length) {
       container.innerHTML = '<div class="rank-empty">Nenhum pedido encontrado para os filtros selecionados.</div>';
       return;
     }
 
-    // Agrega quantidades por categoria e produto
+    // Agrega quantidades por categoria e produto (já normalizando renomeações)
     const categorias = {};
-    const catOrder = ['Gelato', 'Pote', 'Confeitaria', 'Insumo', 'Outro'];
-    const catEmoji = { Gelato: '🍦', Pote: '🥡', Confeitaria: '🎂', Insumo: '📦', Outro: '✏️' };
-
     pedidos.forEach(pedido => {
       (pedido.pedido_itens || []).forEach(item => {
         const obs = item.observacao || '';
         const match = obs.match(/^\[([^\]]+)\]\s*(.+)$/);
         const cat   = match ? match[1] : 'Outro';
-        const nome  = match ? match[2].trim() : obs;
+        let   nome  = match ? match[2].trim() : obs;
         const qty   = Number(item.quantidade) || 0;
         if (!qty) return;
-
+        nome = resolve(nome); // mesmo produto renomeado cai no mesmo grupo
         if (!categorias[cat]) categorias[cat] = {};
         categorias[cat][nome] = (categorias[cat][nome] || 0) + qty;
       });
     });
 
-    // Monta HTML do ranking
-    const cats = catOrder.filter(c => categorias[c]);
-    // Adiciona categorias não previstas no order
+    const cats = RANK_CAT_ORDER.filter(c => categorias[c]);
     Object.keys(categorias).forEach(c => { if (!cats.includes(c)) cats.push(c); });
 
     if (!cats.length) {
@@ -2217,17 +2289,24 @@ async function carregarRanking() {
       return;
     }
 
+    // Guarda o resultado para exportação
+    ultimoRanking = {
+      categorias, cats,
+      contexto: {
+        loja: filtroLoja || 'Todas as lojas',
+        periodo: periodoLabel,
+        geradoEm: new Date().toLocaleString('pt-BR')
+      }
+    };
+
+    // Monta HTML do ranking
     const medals = ['🥇','🥈','🥉'];
     let html = '';
-
     cats.forEach(cat => {
-      const itens = categorias[cat];
-      const sorted = Object.entries(itens).sort((a, b) => b[1] - a[1]);
+      const sorted = Object.entries(categorias[cat]).sort((a, b) => b[1] - a[1]);
       const max = sorted[0][1];
-
       html += `<div class="rank-categoria-block">
-        <div class="rank-categoria-titulo">${catEmoji[cat] || '📦'} ${cat}</div>`;
-
+        <div class="rank-categoria-titulo">${RANK_CAT_EMOJI[cat] || '📦'} ${cat}</div>`;
       sorted.forEach(([nome, qty], i) => {
         const pct   = Math.round((qty / max) * 100);
         const medal = i < 3 ? `<span class="rank-pos-medal">${medals[i]}</span>` : `<span class="rank-pos">${i+1}</span>`;
@@ -2239,16 +2318,90 @@ async function carregarRanking() {
           <span class="rank-qty">${qty} ${unidade}</span>
         </div>`;
       });
-
       html += '</div>';
     });
-
     container.innerHTML = html;
+
+    // Libera exportação
+    document.getElementById('btnRankPDF').disabled = false;
+    document.getElementById('btnRankCSV').disabled = false;
 
   } catch(e) {
     console.warn('Erro ao carregar ranking:', e);
     container.innerHTML = '<div class="rank-empty">Erro ao carregar ranking. Tente novamente.</div>';
   }
+}
+
+// ── EXPORTAÇÃO DO RANKING ──────────────────────────────────
+function exportarRankingPDF() {
+  if (!ultimoRanking) { alert('Gere o ranking antes de exportar.'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const W = 210, BORDO = [107, 30, 46], TX = [44, 24, 16], MUT = [120, 100, 90];
+  const { loja, periodo, geradoEm } = ultimoRanking.contexto;
+
+  doc.setFillColor(...BORDO); doc.rect(0, 0, W, 26, 'F');
+  doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
+  doc.text('Ranking de Itens Mais Pedidos', 14, 13);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+  doc.text(`Loja: ${loja}   |   Período: ${periodo}`, 14, 20);
+
+  doc.setTextColor(...MUT); doc.setFontSize(8);
+  doc.text(`Gerado em ${geradoEm}`, 14, 32);
+
+  let y = 38;
+  ultimoRanking.cats.forEach(cat => {
+    const sorted = Object.entries(ultimoRanking.categorias[cat]).sort((a, b) => b[1] - a[1]);
+    const unidade = cat === 'Gelato' ? 'cx.' : 'un.';
+    const body = sorted.map(([nome, qty], i) => [String(i + 1), nome, `${qty} ${unidade}`]);
+
+    doc.setTextColor(...BORDO); doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+    if (y > 260) { doc.addPage(); y = 18; }
+    doc.text(`${RANK_CAT_EMOJI[cat] || ''} ${cat}`.trim(), 14, y);
+    y += 3;
+
+    doc.autoTable({
+      startY: y,
+      head: [['#', 'Item', 'Quantidade']],
+      body,
+      theme: 'striped',
+      styles: { font: 'helvetica', fontSize: 9, textColor: TX, cellPadding: 2 },
+      headStyles: { fillColor: BORDO, textColor: [255, 255, 255], fontStyle: 'bold' },
+      columnStyles: { 0: { cellWidth: 14, halign: 'center' }, 2: { cellWidth: 36, halign: 'right' } },
+      margin: { left: 14, right: 14 }
+    });
+    y = doc.lastAutoTable.finalY + 8;
+  });
+
+  const lojaSlug = loja.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
+  doc.save(`ranking-${lojaSlug}-${new Date().toISOString().slice(0, 10)}.pdf`);
+}
+
+function exportarRankingCSV() {
+  if (!ultimoRanking) { alert('Gere o ranking antes de exportar.'); return; }
+  const { loja, periodo, geradoEm } = ultimoRanking.contexto;
+  const esc = v => `"${String(v).replace(/"/g, '""')}"`;
+  const linhas = [
+    ['Ranking de Itens Mais Pedidos'],
+    ['Loja', loja], ['Período', periodo], ['Gerado em', geradoEm], [],
+    ['Categoria', 'Posição', 'Item', 'Quantidade', 'Unidade']
+  ].map(l => l.map(esc).join(','));
+
+  ultimoRanking.cats.forEach(cat => {
+    const sorted = Object.entries(ultimoRanking.categorias[cat]).sort((a, b) => b[1] - a[1]);
+    const unidade = cat === 'Gelato' ? 'caixas' : 'unidades';
+    sorted.forEach(([nome, qty], i) => {
+      linhas.push([cat, i + 1, nome, qty, unidade].map(esc).join(','));
+    });
+  });
+
+  const csv = '\uFEFF' + linhas.join('\r\n'); // BOM p/ acentos no Excel
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  const lojaSlug = loja.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
+  a.href = URL.createObjectURL(blob);
+  a.download = `ranking-${lojaSlug}-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
 }
 
 async function verificarNotificacoesNovas() {
@@ -2501,7 +2654,7 @@ function getQtyList(items, prefix) {
   return items.map((item, i) => {
     const nome = typeof item === 'string' ? item : item.nome;
     const un = typeof item === 'string' ? '' : item.un;
-    const qty = snapMultiple(parseInt(document.getElementById(`${prefix}-${i}`)?.value) || 0, MULTIPLOS[nome] || 1);
+    const qty = snapMultiple(parseInt(document.getElementById(`${prefix}-${i}`)?.value) || 0, multiploDe(nome, prefix));
     return { nome, un, qty };
   }).filter(x => x.qty > 0);
 }
@@ -2631,7 +2784,7 @@ async function submitPedido() {
       items.forEach((item, i) => {
         const nome = typeof item === 'string' ? item : item.nome;
         const un = typeof item === 'string' ? 'unidade' : item.un;
-        const qty = snapMultiple(parseInt(document.getElementById(`${prefix}-${i}`)?.value) || 0, MULTIPLOS[nome] || 1);
+        const qty = snapMultiple(parseInt(document.getElementById(`${prefix}-${i}`)?.value) || 0, multiploDe(nome, prefix));
         if (qty > 0) {
           itens.push({
             produto_id: null,
@@ -2922,7 +3075,7 @@ function downloadPDF() {
     items.forEach((item, i) => {
       const nome = typeof item === 'string' ? item : item.nome;
       const un   = typeof item === 'string' ? 'caixas' : item.un;
-      const qty  = snapMultiple(parseInt(document.getElementById(`${prefix}-${i}`)?.value) || 0, MULTIPLOS[nome] || 1);
+      const qty  = snapMultiple(parseInt(document.getElementById(`${prefix}-${i}`)?.value) || 0, multiploDe(nome, prefix));
       if (qty > 0) result.push([nome, qty.toString(), un, '☐']);
     });
     return result;
