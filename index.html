@@ -1281,8 +1281,9 @@
   <div class="step-tab" data-step="2">Potes</div>
   <div class="step-tab" data-step="3">Confeitaria</div>
   <div class="step-tab" data-step="4">Insumos</div>
-  <div class="step-tab" data-step="5">Outros</div>
-  <div class="step-tab" data-step="6">Revisão</div>
+  <div class="step-tab" data-step="5">Uniformes</div>
+  <div class="step-tab" data-step="6">Outros</div>
+  <div class="step-tab" data-step="7">Revisão</div>
 </div>
 
 <main>
@@ -1389,7 +1390,7 @@
       <div class="section-icon">🏪</div>
       <div>
         <div class="section-title">Identificação da Loja</div>
-        <div class="section-subtitle">Seção 1 de 7</div>
+        <div class="section-subtitle">Seção 1 de 8</div>
       </div>
     </div>
     <div class="section-body">
@@ -1432,6 +1433,7 @@
           <div class="dot"></div>
           <div class="dot"></div>
           <div class="dot"></div>
+          <div class="dot"></div>
         </div>
         <button class="btn-next" onclick="nextStep()">Próximo &rarr;</button>
       </div>
@@ -1444,7 +1446,7 @@
       <div class="section-icon">🍦</div>
       <div>
         <div class="section-title">Caixas de Gelato</div>
-        <div class="section-subtitle">Seção 2 de 7 — Selecionar sabores e quantidades</div>
+        <div class="section-subtitle">Seção 2 de 8 — Selecionar sabores e quantidades</div>
       </div>
     </div>
     <div class="section-body">
@@ -1455,7 +1457,7 @@
       <div class="nav-buttons">
         <button class="btn-prev" onclick="prevStep()">&larr; Anterior</button>
         <div class="step-dots">
-          <div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          <div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
         </div>
         <button class="btn-next" onclick="nextStep()">Próximo &rarr;</button>
       </div>
@@ -1468,7 +1470,7 @@
       <div class="section-icon">🥡</div>
       <div>
         <div class="section-title">Potes Fechados</div>
-        <div class="section-subtitle">Seção 3 de 7 — Para revenda</div>
+        <div class="section-subtitle">Seção 3 de 8 — Para revenda</div>
       </div>
     </div>
     <div class="section-body">
@@ -1479,7 +1481,7 @@
       <div class="nav-buttons">
         <button class="btn-prev" onclick="prevStep()">&larr; Anterior</button>
         <div class="step-dots">
-          <div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          <div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
         </div>
         <button class="btn-next" onclick="nextStep()">Próximo &rarr;</button>
       </div>
@@ -1492,7 +1494,7 @@
       <div class="section-icon">🎂</div>
       <div>
         <div class="section-title">Confeitaria</div>
-        <div class="section-subtitle">Seção 4 de 7</div>
+        <div class="section-subtitle">Seção 4 de 8</div>
       </div>
     </div>
     <div class="section-body">
@@ -1503,7 +1505,7 @@
       <div class="nav-buttons">
         <button class="btn-prev" onclick="prevStep()">&larr; Anterior</button>
         <div class="step-dots">
-          <div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          <div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
         </div>
         <button class="btn-next" onclick="nextStep()">Próximo &rarr;</button>
       </div>
@@ -1516,7 +1518,7 @@
       <div class="section-icon">📦</div>
       <div>
         <div class="section-title">Insumos & Uniformes</div>
-        <div class="section-subtitle">Seção 5 de 7 — Embalagens, bebidas, descartáveis</div>
+        <div class="section-subtitle">Seção 5 de 8 — Embalagens, bebidas, descartáveis</div>
       </div>
     </div>
     <div class="section-body">
@@ -1527,20 +1529,44 @@
       <div class="nav-buttons">
         <button class="btn-prev" onclick="prevStep()">&larr; Anterior</button>
         <div class="step-dots">
-          <div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div>
+          <div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
         </div>
         <button class="btn-next" onclick="nextStep()">Próximo &rarr;</button>
       </div>
     </div>
   </div>
 
-  <!-- SECTION 5: OUTROS -->
+  <!-- SECTION 5: UNIFORMES -->
   <div class="section-card" id="section-5">
+    <div class="section-header">
+      <div class="section-icon">👕</div>
+      <div>
+        <div class="section-title">Uniformes</div>
+        <div class="section-subtitle">Seção 6 de 8 — Kits, dolmãs, aventais e afins</div>
+      </div>
+    </div>
+    <div class="section-body">
+      <table class="product-table" id="uniformes-table">
+        <thead><tr><th>Item</th><th style="text-align:center">Quantidade</th></tr></thead>
+        <tbody id="uniformes-body"></tbody>
+      </table>
+      <div class="nav-buttons">
+        <button class="btn-prev" onclick="prevStep()">&larr; Anterior</button>
+        <div class="step-dots">
+          <div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+        <button class="btn-next" onclick="nextStep()">Próximo &rarr;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 6: OUTROS -->
+  <div class="section-card" id="section-6">
     <div class="section-header">
       <div class="section-icon">✏️</div>
       <div>
         <div class="section-title">Outros Pedidos</div>
-        <div class="section-subtitle">Seção 6 de 7 — Itens livres e observações</div>
+        <div class="section-subtitle">Seção 7 de 8 — Itens livres e observações</div>
       </div>
     </div>
     <div class="section-body">
@@ -1559,20 +1585,20 @@
       <div class="nav-buttons">
         <button class="btn-prev" onclick="prevStep()">&larr; Anterior</button>
         <div class="step-dots">
-          <div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div>
+          <div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div>
         </div>
         <button class="btn-next" onclick="nextStep()">Revisar Pedido &rarr;</button>
       </div>
     </div>
   </div>
 
-  <!-- SECTION 6: REVISÃO -->
-  <div class="section-card" id="section-6">
+  <!-- SECTION 7: REVISÃO -->
+  <div class="section-card" id="section-7">
     <div class="section-header">
       <div class="section-icon">📋</div>
       <div>
         <div class="section-title">Revisão do Pedido</div>
-        <div class="section-subtitle">Seção 7 de 7 — Confirme antes de enviar</div>
+        <div class="section-subtitle">Seção 8 de 8 — Confirme antes de enviar</div>
       </div>
     </div>
     <div class="section-body">
@@ -1583,7 +1609,7 @@
       <div class="nav-buttons">
         <button class="btn-prev" onclick="prevStep()">&larr; Corrigir</button>
         <div class="step-dots">
-          <div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div>
+          <div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div>
         </div>
         <button class="btn-submit" id="submitBtn" onclick="submitPedido()">✓ Confirmar Pedido</button>
       </div>
@@ -1672,13 +1698,17 @@ const insumos = [
   {nome:'Avental', un:'unid.'}
 ];
 
+// Categoria Uniformes — nasce vazia; é populada pela fábrica via catalogo_produtos
+// (categoria 'Uniforme'). Mantida separada de "insumos".
+const uniformes = [];
+
 // ============================================================
 // STATE
 // ============================================================
 let currentStep = 0;
 let lastPedidoId = null;
 let lastPedidoNum = null;
-const totalSteps = 7;
+const totalSteps = 8;
 
 // ============================================================
 // INIT
@@ -1695,6 +1725,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   buildTable('potes-body', potes, 'pote', 'unid.');
   buildTable('confeitaria-body', confeitaria, 'confeitaria', 'unid.');
   buildInsumosTable();
+  buildUniformesTable();
   addOutroItem();
 });
 
@@ -1713,7 +1744,7 @@ async function carregarCatalogoCompleto() {
       .order('ordem', { ascending: true });
     if (error || !data || !data.length) return; // mantém arrays locais
 
-    const porCat = { Gelato: [], Pote: [], Confeitaria: [], Insumo: [] };
+    const porCat = { Gelato: [], Pote: [], Confeitaria: [], Insumo: [], Uniforme: [] };
     data.forEach(p => { if (porCat[p.categoria]) porCat[p.categoria].push(p.nome); });
 
     if (porCat.Gelato.length)      { gelatos.length = 0;      porCat.Gelato.forEach(n => gelatos.push(n)); }
@@ -1725,6 +1756,10 @@ async function carregarCatalogoCompleto() {
         const local = insumosLocais.find(x => x.nome === nome);
         insumos.push({ nome, un: local ? local.un : '' });
       });
+    }
+    if (porCat.Uniforme.length) {
+      uniformes.length = 0;
+      porCat.Uniforme.forEach(nome => uniformes.push({ nome, un: '' }));
     }
   } catch (e) {
     console.warn('Falha ao carregar catálogo, usando listas locais:', e);
@@ -1842,6 +1877,15 @@ function buildTable(tbodyId, items, prefix, unit) {
 
 function buildInsumosTable() {
   buildTable('insumos-body', insumos, 'insumo', '');
+}
+
+function buildUniformesTable() {
+  if (!uniformes.length) {
+    const body = document.getElementById('uniformes-body');
+    if (body) body.innerHTML = '<tr><td colspan="2" style="text-align:center;color:var(--text-light);padding:18px;font-size:.85rem">Nenhum uniforme disponível no momento.</td></tr>';
+    return;
+  }
+  buildTable('uniformes-body', uniformes, 'uniforme', '');
 }
 
 // Arredonda para o múltiplo mais próximo (qualquer quantidade > 0 vira ao
@@ -2186,8 +2230,8 @@ function mostrarArea(area) {
 // ── RANKING DE ITENS MAIS PEDIDOS ──────────────────────────
 let ultimoRanking = null; // guarda o último ranking calculado (para exportar)
 
-const RANK_CAT_ORDER = ['Gelato', 'Pote', 'Confeitaria', 'Insumo', 'Outro'];
-const RANK_CAT_EMOJI = { Gelato: '🍦', Pote: '🥡', Confeitaria: '🎂', Insumo: '📦', Outro: '✏️' };
+const RANK_CAT_ORDER = ['Gelato', 'Pote', 'Confeitaria', 'Insumo', 'Uniforme', 'Outro'];
+const RANK_CAT_EMOJI = { Gelato: '🍦', Pote: '🥡', Confeitaria: '🎂', Insumo: '📦', Uniforme: '👕', Outro: '✏️' };
 
 function toggleRankPeriodo() {
   const custom = document.getElementById('rankFiltroPeriodo').value === 'custom';
@@ -2592,7 +2636,7 @@ function atualizarVisibilidadeFormulario() {
 function nextStep() {
   if (!validateStep(currentStep)) return;
   currentStep++;
-  if (currentStep === 6) buildReview();
+  if (currentStep === 7) buildReview();
   showStep(currentStep);
 }
 
@@ -2682,6 +2726,7 @@ function buildReview() {
   const poteItems = getQtyList(potes, 'pote');
   const confItems = getQtyList(confeitaria, 'confeitaria');
   const insItems = getQtyList(insumos, 'insumo');
+  const uniItems = getQtyList(uniformes, 'uniforme');
   const outroItems = getOutros();
 
   let html = `
@@ -2714,6 +2759,12 @@ function buildReview() {
   if (insItems.length) {
     html += `<div class="review-section"><div class="review-section-title">📦 Insumos & Uniformes</div><table class="review-table">`;
     insItems.forEach(x => { html += `<tr><td>${x.nome}</td><td>${x.qty} ${x.un}</td></tr>`; });
+    html += `</table></div>`;
+  }
+
+  if (uniItems.length) {
+    html += `<div class="review-section"><div class="review-section-title">👕 Uniformes</div><table class="review-table">`;
+    uniItems.forEach(x => { html += `<tr><td>${x.nome}</td><td>${x.qty} ${x.un}</td></tr>`; });
     html += `</table></div>`;
   }
 
@@ -2800,6 +2851,7 @@ async function submitPedido() {
     addItens(potes, 'pote', 'Pote');
     addItens(confeitaria, 'confeitaria', 'Confeitaria');
     addItens(insumos, 'insumo', 'Insumo');
+    addItens(uniformes, 'uniforme', 'Uniforme');
 
     document.querySelectorAll('#outros-container .outros-item').forEach(div => {
       const id = div.id.replace('outro-', '');
@@ -3085,6 +3137,7 @@ function downloadPDF() {
   const poteRows      = getRows(potes, 'pote');
   const confRows      = getRows(confeitaria, 'confeitaria');
   const insRows       = getRows(insumos, 'insumo');
+  const uniRows       = getRows(uniformes, 'uniforme');
 
   const outroRows = [];
   document.querySelectorAll('#outros-container .outros-item').forEach(div => {
@@ -3094,7 +3147,7 @@ function downloadPDF() {
     if (desc) outroRows.push([desc, qty, '-', '☐']);
   });
 
-  const totalItens = gelatoRows.length + poteRows.length + confRows.length + insRows.length + outroRows.length;
+  const totalItens = gelatoRows.length + poteRows.length + confRows.length + insRows.length + uniRows.length + outroRows.length;
 
   if (totalItens === 0) {
     doc.setFontSize(10);
@@ -3107,6 +3160,7 @@ function downloadPDF() {
   if (poteRows.length)    drawSection('POTES FECHADOS — REVENDA', '🥡', poteRows);
   if (confRows.length)    drawSection('CONFEITARIA', '🎂', confRows);
   if (insRows.length)     drawSection('INSUMOS, EMBALAGENS & UNIFORMES', '📦', insRows);
+  if (uniRows.length)     drawSection('UNIFORMES', '👕', uniRows);
   if (outroRows.length)   drawSection('OUTROS ITENS', '✏️', outroRows);
 
   // ── OBSERVAÇÕES ───────────────────────────────────────────
