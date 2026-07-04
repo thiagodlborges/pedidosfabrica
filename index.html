@@ -1291,6 +1291,7 @@
 <!-- ── BARRA DE ACESSO DA LOJA ───────────────────────── -->
 <div class="loja-login-bar" id="lojaLoginBar">
   <div class="loja-user-bar" id="lojaUserBar" style="display:none">
+    <a href="https://thiagodlborges.github.io/Sistema-Luna/" class="loja-nav-btn" style="text-decoration:none;display:inline-flex;align-items:center">← Sistema Luna</a>
     <div class="loja-user-info">Olá, <strong id="lojaUserNome"></strong> — <span id="lojaUserLoja"></span></div>
     <button class="loja-nav-btn active" id="btnVerPedidos" onclick="mostrarArea('pedidos')">📋 Meus Pedidos</button>
     <button class="loja-nav-btn" id="btnVerNotifs" onclick="mostrarArea('notifs')">
@@ -2127,21 +2128,31 @@ async function verificarLojaUser(user) {
       return;
     }
 
-    if (!perfil || !['loja','master','master_loja'].includes(perfil.tipo)) {
-      // Usuário existe mas não é loja/master (ex: fábrica) — redireciona
+    if (!perfil) {
+      const err = document.getElementById('lsError');
+      if (err) { err.textContent = 'Perfil não encontrado.'; err.classList.add('show'); }
+      await sb.auth.signOut();
+      return;
+    }
+
+    // Portão de acesso: concessão em perfil_acessos (ou master), não mais o tipo bruto
+    const { data: acessoOk, error: acessoErr } = await sb.rpc('tem_acesso', { p_slug: 'pedidos_loja' });
+    if (acessoErr || !acessoOk) {
       const err = document.getElementById('lsError');
       if (err) { err.textContent = 'Este acesso é exclusivo para usuários de loja.'; err.classList.add('show'); }
       await sb.auth.signOut();
       return;
     }
 
-    lojaUsuario = { ...user, nome: perfil.nome, loja: perfil.loja || null, tipo: perfil.tipo };
+    lojaUsuario = { ...user, nome: perfil.nome, loja: perfil.loja || null, lojas: perfil.lojas || null, tipo: perfil.tipo };
     mostrarSite();
     document.getElementById('lojaLoginDropdown').classList.remove('show');
     document.getElementById('lojaLoginTrigger').style.display = 'none';
     document.getElementById('lojaUserBar').style.display = 'flex';
     document.getElementById('lojaUserNome').textContent = perfil.nome;
-    document.getElementById('lojaUserLoja').textContent = perfil.loja || 'Todas as lojas';
+    document.getElementById('lojaUserLoja').textContent = (perfil.lojas && perfil.lojas.length)
+      ? perfil.lojas.join(' + ')
+      : (perfil.loja || 'Todas as lojas');
     // Mostra botão de ranking só para master e master_loja
     const isMasterTipo = ['master','master_loja'].includes(perfil.tipo);
     document.getElementById('btnVerRanking').style.display = isMasterTipo ? '' : 'none';
@@ -2199,22 +2210,33 @@ function mostrarArea(area) {
     document.querySelectorAll('.section-card').forEach(s => s.classList.remove('active-section'));
     document.getElementById('section-0').classList.add('active-section');
     currentStep = 0;
-    // Auto-seleciona a loja do usuário logado
+    // Auto-seleciona a loja do usuário logado (caso de loja única)
     if (lojaUsuario && lojaUsuario.loja) {
       document.querySelectorAll('input[name="loja"]').forEach(r => {
         if (r.value === lojaUsuario.loja) { r.checked = true; }
       });
     }
-    // Mostra info de loja logada ou grid de seleção
+    // Mostra info de loja logada, grid restrito (múltiplas lojas) ou grid completo
     if (lojaUsuario && lojaUsuario.tipo === 'loja' && lojaUsuario.loja) {
-      // Loja normal: mostra nome fixo e esconde grid
+      // Loja única: mostra nome fixo e esconde grid
       document.getElementById('lojaLogadaInfo').style.display = 'block';
       document.getElementById('lojaLogadaNome').textContent = lojaUsuario.loja;
       document.getElementById('lojaGrid').style.display = 'none';
-    } else {
-      // Master ou sem loja: mostra grid de seleção normalmente
+    } else if (lojaUsuario && lojaUsuario.tipo === 'loja' && lojaUsuario.lojas && lojaUsuario.lojas.length) {
+      // Múltiplas lojas (ex: Natália): mostra só as lojas permitidas no grid
       document.getElementById('lojaLogadaInfo').style.display = 'none';
       document.getElementById('lojaGrid').style.display = 'grid';
+      document.querySelectorAll('.loja-option').forEach(opt => {
+        const input = opt.querySelector('input[name="loja"]');
+        const permitido = input && lojaUsuario.lojas.includes(input.value);
+        opt.style.display = permitido ? '' : 'none';
+        if (input) input.checked = false;
+      });
+    } else {
+      // Master ou master_loja: mostra grid de seleção completo
+      document.getElementById('lojaLogadaInfo').style.display = 'none';
+      document.getElementById('lojaGrid').style.display = 'grid';
+      document.querySelectorAll('.loja-option').forEach(opt => opt.style.display = '');
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
     return;
@@ -2448,10 +2470,18 @@ function exportarRankingCSV() {
   a.click();
 }
 
+// Aplica o filtro de loja(s) numa query, cobrindo os 3 casos: master (sem filtro),
+// loja única (eq) e múltiplas lojas via perfis.lojas, ex: Natália (in).
+function aplicarEscopoLoja(query) {
+  if (['master','master_loja'].includes(lojaUsuario.tipo)) return query;
+  if (lojaUsuario.lojas && lojaUsuario.lojas.length) return query.in('loja', lojaUsuario.lojas);
+  return query.eq('loja', lojaUsuario.loja);
+}
+
 async function verificarNotificacoesNovas() {
   if (!lojaUsuario) return;
   let qDot = sb.from('notificacoes').select('id').eq('lida', false).eq('de', 'fabrica');
-  if (!['master','master_loja'].includes(lojaUsuario.tipo)) qDot = qDot.eq('loja', lojaUsuario.loja);
+  qDot = aplicarEscopoLoja(qDot);
   const { data } = await qDot;
   const dot = document.getElementById('dotNovos');
   dot.style.display = (data && data.length > 0) ? 'inline-block' : 'none';
@@ -2460,10 +2490,9 @@ async function verificarNotificacoesNovas() {
 async function marcarTodasLidas() {
   if (!lojaUsuario) return;
   if (!['master','master_loja'].includes(lojaUsuario.tipo)) {
-    await sb.from('notificacoes')
-      .update({ lida: true })
-      .eq('loja', lojaUsuario.loja)
-      .eq('de', 'fabrica');
+    await aplicarEscopoLoja(
+      sb.from('notificacoes').update({ lida: true }).eq('de', 'fabrica')
+    );
   }
   document.getElementById('dotNovos').style.display = 'none';
 }
@@ -2474,7 +2503,7 @@ async function carregarHistorico() {
   c.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-light)">Carregando...</div>';
 
   let query = sb.from('pedidos').select('*, pedido_itens(*)').order('id', { ascending: false });
-  if (!['master','master_loja'].includes(lojaUsuario.tipo)) query = query.eq('loja', lojaUsuario.loja);
+  query = aplicarEscopoLoja(query);
   const { data: pedidos } = await query;
 
   if (!pedidos || !pedidos.length) {
@@ -2489,7 +2518,7 @@ async function carregarHistorico() {
   const statusLabel = { pendente:'⏳ Pendente', confirmado:'✅ Confirmado', separado:'📦 Em Separação', enviado:'🚚 Enviado', rejeitado:'❌ Rejeitado' };
 
   // Renderiza tabela de histórico
-  const isMaster = ['master','master_loja'].includes(lojaUsuario.tipo);
+  const isMaster = ['master','master_loja'].includes(lojaUsuario.tipo) || (lojaUsuario.lojas && lojaUsuario.lojas.length > 1);
   const stColors = {
     pendente_aprovacao: 'background:#FFF3E0;color:#E07B39',
     aprovado: 'background:#E8F5E9;color:#2D6A4F',
@@ -2552,7 +2581,7 @@ async function carregarNotificacoes() {
   c.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-light)">Carregando...</div>';
 
   let qNotif = sb.from('notificacoes').select('*').order('criado_em', { ascending: false });
-  if (!['master','master_loja'].includes(lojaUsuario.tipo)) qNotif = qNotif.eq('loja', lojaUsuario.loja);
+  qNotif = aplicarEscopoLoja(qNotif);
   const { data: notifs } = await qNotif;
 
   if (!notifs || !notifs.length) {
