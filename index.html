@@ -730,6 +730,7 @@
 .loja-user-bar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0;
   width: 100%;
 }
@@ -1294,8 +1295,8 @@
 <!-- ── BARRA DE ACESSO DA LOJA ───────────────────────── -->
 <div class="loja-login-bar" id="lojaLoginBar">
   <div class="loja-user-bar" id="lojaUserBar" style="display:none">
-    <a href="https://thiagodlborges.github.io/Sistema-Luna/" class="loja-nav-btn" style="text-decoration:none;display:inline-flex;align-items:center">← Sistema Luna</a>
-    <div class="loja-user-info">Olá, <strong id="lojaUserNome"></strong> — <span id="lojaUserLoja"></span></div>
+    <a href="https://thiagodlborges.github.io/Sistema-Luna/" class="loja-nav-btn" style="text-decoration:none;display:inline-flex;align-items:center;white-space:nowrap;flex-shrink:0">← Sistema Luna</a>
+    <div class="loja-user-info" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Olá, <strong id="lojaUserNome"></strong> — <span id="lojaUserLoja"></span></div>
     <button class="loja-nav-btn active" id="btnVerPedidos" onclick="mostrarArea('pedidos')">📋 Meus Pedidos</button>
     <button class="loja-nav-btn" id="btnVerNotifs" onclick="mostrarArea('notifs')">
       🔔 Notificações<span id="dotNovos" class="dot-novo" style="display:none"></span>
