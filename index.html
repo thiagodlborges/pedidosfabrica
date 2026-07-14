@@ -2923,29 +2923,24 @@ async function submitPedido() {
     enviarParaSheets(pedidoPayload);
 
     // ── SALVAR NO SUPABASE (await direto) ──────────────────
+    // Cabeçalho + itens numa função atômica só: nunca mais fica um pedido
+    // "fantasma" sem item no Supabase (Google Sheets continua sendo o registro
+    // principal, então essa parte segue não-bloqueante de propósito).
     try {
-      const { data: pedData, error: pedErr } = await sb.from('pedidos').insert([{
-        numero_pedido: numeroPedido,
-        loja: loja,
-        data_pedido: new Date().toISOString().split('T')[0],
-        data_entrega_prevista: dataEntrega,
-        status: 'pendente_aprovacao',
-        observacoes: obs || null,
-        criado_por: loja
-      }]).select();
+      const { data: pedidoId, error: rpcErr } = await sb.rpc('registrar_pedido', {
+        p_loja: loja,
+        p_numero_pedido: numeroPedido,
+        p_data_entrega_prevista: dataEntrega,
+        p_observacoes: obs || null,
+        p_criado_por: loja,
+        p_itens: itens,
+      });
 
-      if (pedErr) {
-        console.error('Erro ao salvar pedido:', pedErr.message, pedErr.details, pedErr.hint);
-      } else if (pedData && pedData[0]) {
-        lastPedidoId = pedData[0].id;
-        console.log('Pedido salvo no Supabase. ID:', lastPedidoId);
-
-        if (itens.length > 0) {
-          const itensComId = itens.map(it => ({ ...it, pedido_id: lastPedidoId }));
-          const { error: itensErr } = await sb.from('pedido_itens').insert(itensComId);
-          if (itensErr) console.error('Erro ao salvar itens:', itensErr.message);
-          else console.log('Itens salvos:', itens.length);
-        }
+      if (rpcErr) {
+        console.error('Erro ao salvar pedido no Supabase:', rpcErr.message);
+      } else {
+        lastPedidoId = pedidoId;
+        console.log('Pedido salvo no Supabase. ID:', lastPedidoId, '— itens:', itens.length);
       }
     } catch(saveErr) {
       console.error('Exceção ao salvar no Supabase:', saveErr);
@@ -3293,6 +3288,8 @@ async function aprovarPedido(id) {
       status_resposta: null
     }]);
     carregarHistorico();
+  } else {
+    alert('Erro ao aprovar: '+error.message);
   }
 }
 
