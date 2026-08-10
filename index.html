@@ -1775,7 +1775,8 @@ async function carregarCatalogoCompleto() {
   }
 }
 
-// Datas globalmente lotadas (2+ pedidos)
+// Datas globalmente lotadas (LIMITE_PEDIDOS_POR_DATA+ pedidos)
+const LIMITE_PEDIDOS_POR_DATA = 4;
 let datasBloqueadas = [];
 
 async function setMinDate() {
@@ -1785,7 +1786,7 @@ async function setMinDate() {
   dateInput.min = iso;
   document.getElementById('minDateText').textContent = formatDate(minDate);
 
-  // Busca datas com 2 ou mais pedidos (bloqueadas globalmente)
+  // Busca datas com LIMITE_PEDIDOS_POR_DATA ou mais pedidos (bloqueadas globalmente)
   await carregarDatasBloqueadas(iso);
 
   // Define valor inicial como primeiro dia disponível
@@ -1800,7 +1801,7 @@ async function setMinDate() {
   // Bloqueia seleção de datas cheias ao mudar
   dateInput.addEventListener('change', function() {
     if (datasBloqueadas.includes(this.value)) {
-      showError('Esta data já atingiu o limite de 2 pedidos. Por favor, escolha outra data.');
+      showError('Esta data já atingiu o limite de '+LIMITE_PEDIDOS_POR_DATA+' pedidos. Por favor, escolha outra data.');
       this.value = dataInicial;
     }
   });
@@ -1823,9 +1824,9 @@ async function carregarDatasBloqueadas(minIso) {
       contagem[p.data_entrega_prevista] = (contagem[p.data_entrega_prevista] || 0) + 1;
     });
 
-    // Datas com 2 ou mais pedidos ficam bloqueadas
+    // Datas com LIMITE_PEDIDOS_POR_DATA ou mais pedidos ficam bloqueadas
     datasBloqueadas = Object.entries(contagem)
-      .filter(([, cnt]) => cnt >= 2)
+      .filter(([, cnt]) => cnt >= LIMITE_PEDIDOS_POR_DATA)
       .map(([dt]) => dt);
 
     console.log('[Datas bloqueadas]', datasBloqueadas);
@@ -2719,7 +2720,7 @@ function validateStep(step) {
     const minDate = addBusinessDays(new Date(), 3);
     minDate.setHours(0,0,0,0);
     if (chosen < minDate) { showError('A data de entrega deve ser ao menos 3 dias úteis a partir de hoje.'); return false; }
-    if (datasBloqueadas.includes(data)) { showError('Esta data já atingiu o limite de 2 pedidos. Por favor, escolha outra data.'); return false; }
+    if (datasBloqueadas.includes(data)) { showError('Esta data já atingiu o limite de '+LIMITE_PEDIDOS_POR_DATA+' pedidos. Por favor, escolha outra data.'); return false; }
   }
   return true;
 }
@@ -2836,13 +2837,13 @@ async function submitPedido() {
       : document.querySelector('input[name="loja"]:checked')?.value;
     const dataEntrega = document.getElementById('dataEntrega').value;
 
-    // ── VERIFICAÇÃO: máximo 2 pedidos por data de entrega (global) ──
+    // ── VERIFICAÇÃO: máximo LIMITE_PEDIDOS_POR_DATA pedidos por data de entrega (global) ──
     // Masters não têm restrição de limite
     if (dataEntrega && !['master','master_loja'].includes(lojaUsuario?.tipo)) {
       // Checa se a data está na lista de bloqueadas (carregada ao abrir o formulário)
       // ou faz uma verificação direta no banco como fallback
       if (datasBloqueadas.includes(dataEntrega)) {
-        showError('Esta data já atingiu o limite de 2 pedidos. Por favor, escolha outra data.');
+        showError('Esta data já atingiu o limite de '+LIMITE_PEDIDOS_POR_DATA+' pedidos. Por favor, escolha outra data.');
         btn.disabled = false;
         document.getElementById('loadingOverlay').classList.remove('show');
         return;
@@ -2852,8 +2853,8 @@ async function submitPedido() {
         .select('id')
         .eq('data_entrega_prevista', dataEntrega)
         .not('status', 'in', '("cancelado","rejeitado")');
-      if (pedidosDia && pedidosDia.length >= 2) {
-        showError('Esta data já atingiu o limite de 2 pedidos. Por favor, escolha outra data.');
+      if (pedidosDia && pedidosDia.length >= LIMITE_PEDIDOS_POR_DATA) {
+        showError('Esta data já atingiu o limite de '+LIMITE_PEDIDOS_POR_DATA+' pedidos. Por favor, escolha outra data.');
         btn.disabled = false;
         document.getElementById('loadingOverlay').classList.remove('show');
         return;
