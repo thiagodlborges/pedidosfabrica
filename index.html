@@ -1738,27 +1738,49 @@ window.addEventListener('DOMContentLoaded', async () => {
   addOutroItem();
 });
 
-// Lê os produtos ATIVOS do catálogo (catalogo_produtos) e substitui os arrays
-// locais por categoria. Se a consulta falhar ou não trouxer itens de uma
-// categoria, o array local original é mantido como fallback (offline / migração).
+// Lê Gelato/Pote/Confeitaria de precificacao_produtos (fonte única da fábrica,
+// filtrando disponivel_pedido_loja=true) e Insumo/Uniforme de catalogo_produtos
+// (esses dois não são domínio de Precificação Fábrica). Guarda o mapa nome->id
+// pra podermos gravar o vínculo em pedido_itens.precificacao_produto_id.
+let precifPorNome = {};
 async function carregarCatalogoCompleto() {
   // Guarda os insumos locais para herdar a UNIDADE (a tabela do catálogo não
   // armazena unidade; casamos pelo nome).
   const insumosLocais = insumos.slice();
   try {
-    const { data, error } = await sb
-      .from('catalogo_produtos')
-      .select('nome, categoria, ativo, ordem')
-      .eq('ativo', true)
-      .order('ordem', { ascending: true });
-    if (error || !data || !data.length) return; // mantém arrays locais
+    const [precifRes, catRes] = await Promise.all([
+      sb.from('precificacao_produtos')
+        .select('id, nome, categoria, ativo, disponivel_pedido_loja')
+        .in('origem', ['fabrica', 'fabrica_insumo'])
+        .eq('ativo', true)
+        .eq('disponivel_pedido_loja', true)
+        .order('nome'),
+      sb.from('catalogo_produtos')
+        .select('nome, categoria, ativo, ordem')
+        .eq('ativo', true)
+        .in('categoria', ['Insumo', 'Uniforme'])
+        .order('ordem', { ascending: true })
+    ]);
 
-    const porCat = { Gelato: [], Pote: [], Confeitaria: [], Insumo: [], Uniforme: [] };
+    if (!precifRes.error && precifRes.data) {
+      precifPorNome = {};
+      const porCatPrecif = { Gelato: [], Pote: [], Confeitaria: [] };
+      const CATEGORIA_MAP = { 'Gelato': 'Gelato', 'Potes': 'Pote', 'Confeitaria': 'Confeitaria' };
+      precifRes.data.forEach(p => {
+        const bucket = CATEGORIA_MAP[p.categoria];
+        if (bucket) { porCatPrecif[bucket].push(p.nome); precifPorNome[p.nome] = p.id; }
+      });
+      if (porCatPrecif.Gelato.length)      { gelatos.length = 0;      porCatPrecif.Gelato.forEach(n => gelatos.push(n)); }
+      if (porCatPrecif.Pote.length)        { potes.length = 0;        porCatPrecif.Pote.forEach(n => potes.push(n)); }
+      if (porCatPrecif.Confeitaria.length) { confeitaria.length = 0;  porCatPrecif.Confeitaria.forEach(n => confeitaria.push(n)); }
+    }
+
+    const { data, error } = catRes;
+    if (error || !data || !data.length) return; // mantém arrays locais de Insumo/Uniforme
+
+    const porCat = { Insumo: [], Uniforme: [] };
     data.forEach(p => { if (porCat[p.categoria]) porCat[p.categoria].push(p.nome); });
 
-    if (porCat.Gelato.length)      { gelatos.length = 0;      porCat.Gelato.forEach(n => gelatos.push(n)); }
-    if (porCat.Pote.length)        { potes.length = 0;        porCat.Pote.forEach(n => potes.push(n)); }
-    if (porCat.Confeitaria.length) { confeitaria.length = 0;  porCat.Confeitaria.forEach(n => confeitaria.push(n)); }
     if (porCat.Insumo.length) {
       insumos.length = 0;
       porCat.Insumo.forEach(nome => {
@@ -2611,13 +2633,13 @@ async function carregarNotificacoes() {
   c.innerHTML = notifs.map(n => {
     const naoLida = !n.lida && n.de === 'fabrica';
     const dataFmt = new Date(n.criado_em).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
-    const precisaResposta = ['alteracao_data','substituicao'].includes(n.tipo) && n.status_resposta === 'pendente' && n.de === 'fabrica';
+    const precisaResposta = n.tipo === 'alteracao_data' && n.status_resposta === 'pendente' && n.de === 'fabrica';
     const temResposta = n.status_resposta && n.status_resposta !== 'pendente';
 
     const extraHtml = n.nova_data
       ? `<div class="notif-extra">📅 Nova data proposta: ${new Date(n.nova_data+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'})}</div>` : '';
     const subHtml = n.produto_substituto
-      ? `<div class="notif-extra">🔄 ${n.produto_original} → ${n.produto_substituto}</div>` : '';
+      ? `<div class="notif-extra">🔄 ${n.produto_original}${n.quantidade_original?` (${n.quantidade_original})`:''} → ${n.produto_substituto}${n.quantidade_substituta?` (${n.quantidade_substituta})`:''}${n.tipo==='substituicao' && n.status_resposta==='pendente' ? ' — aguardando aprovação da gestão' : ''}</div>` : '';
 
     const acoes = precisaResposta ? `
       <div class="notif-actions">
@@ -2625,7 +2647,10 @@ async function carregarNotificacoes() {
         <button class="btn-recusar" onclick="responderNotif('${n.id}','recusado')">✗ Recusar</button>
       </div>` : '';
     const respostaLabel = temResposta
-      ? `<div class="resp-label resp-${n.status_resposta}">${n.status_resposta === 'aceito' ? '✓ Aceito pela loja' : '✗ Recusado pela loja'}</div>` : '';
+      ? (n.tipo === 'substituicao'
+          ? `<div class="resp-label resp-${n.status_resposta}">${n.status_resposta === 'aceito' ? '✓ Aprovado pela gestão'+(n.aprovado_por?' · '+n.aprovado_por:'') : '✗ Recusado pela gestão'}</div>`
+          : `<div class="resp-label resp-${n.status_resposta}">${n.status_resposta === 'aceito' ? '✓ Aceito pela loja' : '✗ Recusado pela loja'}</div>`)
+      : '';
 
     return `
     <div class="notif-card ${naoLida ? 'nao-lida' : ''}" id="notif-${n.id}">
@@ -2880,6 +2905,7 @@ async function submitPedido() {
         if (qty > 0) {
           itens.push({
             produto_id: null,
+            precificacao_produto_id: precifPorNome[nome] || null,
             quantidade: qty,
             unidade: un,
             observacao: `[${categoria}] ${nome}`
