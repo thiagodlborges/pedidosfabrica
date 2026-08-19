@@ -1742,13 +1742,16 @@ window.addEventListener('DOMContentLoaded', async () => {
 // filtrando disponivel_pedido_loja=true) e Insumo/Uniforme de catalogo_produtos
 // (esses dois não são domínio de Precificação Fábrica). Guarda o mapa nome->id
 // pra podermos gravar o vínculo em pedido_itens.precificacao_produto_id.
+// Uniforme casa por nome com o Estoque CD Luna (luna_varejo.produtos, via a
+// view lv_produtos) — grava o vínculo em pedido_itens.lv_produto_codigo.
 let precifPorNome = {};
+let lvUniformePorNome = {};
 async function carregarCatalogoCompleto() {
   // Guarda os insumos locais para herdar a UNIDADE (a tabela do catálogo não
   // armazena unidade; casamos pelo nome).
   const insumosLocais = insumos.slice();
   try {
-    const [precifRes, catRes] = await Promise.all([
+    const [precifRes, catRes, lvRes] = await Promise.all([
       sb.from('precificacao_produtos')
         .select('id, nome, categoria, ativo, disponivel_pedido_loja')
         .in('origem', ['fabrica', 'fabrica_insumo'])
@@ -1759,7 +1762,8 @@ async function carregarCatalogoCompleto() {
         .select('nome, categoria, ativo, ordem')
         .eq('ativo', true)
         .in('categoria', ['Insumo', 'Uniforme'])
-        .order('ordem', { ascending: true })
+        .order('ordem', { ascending: true }),
+      sb.from('lv_produtos').select('codigo, produto, unidade').eq('categoria', 'Uniformes')
     ]);
 
     if (!precifRes.error && precifRes.data) {
@@ -1773,6 +1777,11 @@ async function carregarCatalogoCompleto() {
       if (porCatPrecif.Gelato.length)      { gelatos.length = 0;      porCatPrecif.Gelato.forEach(n => gelatos.push(n)); }
       if (porCatPrecif.Pote.length)        { potes.length = 0;        porCatPrecif.Pote.forEach(n => potes.push(n)); }
       if (porCatPrecif.Confeitaria.length) { confeitaria.length = 0;  porCatPrecif.Confeitaria.forEach(n => confeitaria.push(n)); }
+    }
+
+    if (!lvRes.error && lvRes.data) {
+      lvUniformePorNome = {};
+      lvRes.data.forEach(p => { lvUniformePorNome[p.produto.trim()] = { codigo: p.codigo, un: p.unidade }; });
     }
 
     const { data, error } = catRes;
@@ -1790,7 +1799,10 @@ async function carregarCatalogoCompleto() {
     }
     if (porCat.Uniforme.length) {
       uniformes.length = 0;
-      porCat.Uniforme.forEach(nome => uniformes.push({ nome, un: '' }));
+      porCat.Uniforme.forEach(nome => {
+        const lv = lvUniformePorNome[nome];
+        uniformes.push({ nome, un: lv ? lv.un : '' });
+      });
     }
   } catch (e) {
     console.warn('Falha ao carregar catálogo, usando listas locais:', e);
@@ -2906,6 +2918,7 @@ async function submitPedido() {
           itens.push({
             produto_id: null,
             precificacao_produto_id: precifPorNome[nome] || null,
+            lv_produto_codigo: categoria === 'Uniforme' ? (lvUniformePorNome[nome]?.codigo || null) : null,
             quantidade: qty,
             unidade: un,
             observacao: `[${categoria}] ${nome}`
