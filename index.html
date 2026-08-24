@@ -1739,9 +1739,12 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 // Lê Gelato/Pote/Confeitaria de precificacao_produtos (fonte única da fábrica,
-// filtrando disponivel_pedido_loja=true) e Insumo/Uniforme de catalogo_produtos
-// (esses dois não são domínio de Precificação Fábrica). Guarda o mapa nome->id
-// pra podermos gravar o vínculo em pedido_itens.precificacao_produto_id.
+// filtrando apenas ativo=true e disponivel_pedido_loja=true — não filtra por
+// "origem", pois Confeitaria e alguns Gelatos são de revenda, não produção
+// própria, e mesmo assim precisam aparecer pro pedido da loja) e Insumo/Uniforme
+// de catalogo_produtos (esses dois não são domínio de Precificação Fábrica).
+// Guarda o mapa nome->id pra podermos gravar o vínculo em
+// pedido_itens.precificacao_produto_id.
 // Uniforme casa por nome com o Estoque CD Luna (luna_varejo.produtos, via a
 // view lv_produtos) — grava o vínculo em pedido_itens.lv_produto_codigo.
 let precifPorNome = {};
@@ -1754,7 +1757,6 @@ async function carregarCatalogoCompleto() {
     const [precifRes, catRes, lvRes] = await Promise.all([
       sb.from('precificacao_produtos')
         .select('id, nome, categoria, ativo, disponivel_pedido_loja')
-        .in('origem', ['fabrica', 'fabrica_insumo'])
         .eq('ativo', true)
         .eq('disponivel_pedido_loja', true)
         .order('nome'),
