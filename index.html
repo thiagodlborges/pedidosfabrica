@@ -1887,6 +1887,22 @@ window.addEventListener('DOMContentLoaded', async () => {
   buildInsumosTable();
   buildUniformesTable();
   addOutroItem();
+
+  // Lembrete de catálogo desatualizado: se esta aba ficar aberta e minimizada
+  // por muito tempo (uso comum na loja — o formulário fica aberto o dia
+  // inteiro) e a pessoa voltar a ela depois de um bom tempo, avisa que vale
+  // recarregar antes de enviar. Não bloqueia nem mexe nos dados já
+  // preenchidos — é só um lembrete; a garantia de verdade contra item
+  // desativado é a revalidação que acontece no momento do envio (submitPedido).
+  let _ultimaVezVisivel = Date.now();
+  const LIMIAR_AVISO_MS = 30 * 60 * 1000; // 30 minutos
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      _ultimaVezVisivel = Date.now();
+    } else if (Date.now() - _ultimaVezVisivel > LIMIAR_AVISO_MS) {
+      showError('Este formulário está aberto há um tempo — o catálogo pode ter mudado. Recomendamos recarregar a página antes de enviar o pedido.');
+    }
+  });
 });
 
 // Lê Gelato/Pote/Confeitaria de precificacao_produtos (fonte única da fábrica,
@@ -3345,6 +3361,50 @@ async function submitPedido() {
       }
     });
 
+    // ── REVALIDAÇÃO DE DISPONIBILIDADE (correção definitiva) ──────────
+    // Esta tela pode ficar aberta em uma aba por dias. Se um item foi
+    // desativado na Precificação Fábrica desde que a página carregou, ele
+    // ainda apareceria aqui na tabela (renderizada no load). Por isso,
+    // ANTES de montar os payloads (Sheets e Supabase), revalidamos contra o
+    // banco no momento exato do envio — pega a foto mais atual possível,
+    // independente de quanto tempo a aba está aberta.
+    const _precifIdsEnvolvidos = [...new Set(itens.map(it => it.precificacao_produto_id).filter(Boolean))];
+    let _idsIndisponiveis = new Set();
+    if (_precifIdsEnvolvidos.length) {
+      const { data: _statusAtual } = await sb.from('precificacao_produtos')
+        .select('id, ativo, disponivel_pedido_loja')
+        .in('id', _precifIdsEnvolvidos);
+      const _validos = new Set((_statusAtual || []).filter(p => p.ativo && p.disponivel_pedido_loja).map(p => p.id));
+      _precifIdsEnvolvidos.forEach(id => { if (!_validos.has(id)) _idsIndisponiveis.add(id); });
+    }
+    const _itensRemovidosNomes = [];
+    const itensValidos = itens.filter(it => {
+      if (it.precificacao_produto_id && _idsIndisponiveis.has(it.precificacao_produto_id)) {
+        _itensRemovidosNomes.push(it.observacao);
+        return false;
+      }
+      return true;
+    });
+    if (_itensRemovidosNomes.length) {
+      const continuar = confirm(
+        'Estes itens não estão mais disponíveis no catálogo (podem ter sido desativados na Precificação Fábrica) e serão removidos do pedido:\n\n' +
+        _itensRemovidosNomes.join('\n') +
+        '\n\nDeseja continuar enviando o restante do pedido?'
+      );
+      if (!continuar) {
+        btn.disabled = false;
+        document.getElementById('loadingOverlay').classList.remove('show');
+        return;
+      }
+    }
+    if (!itensValidos.length) {
+      showError('Nenhum item deste pedido está mais disponível no catálogo. Recarregue a página e monte o pedido novamente.');
+      btn.disabled = false;
+      document.getElementById('loadingOverlay').classList.remove('show');
+      return;
+    }
+    // ────────────────────────────────────────────────────────────────
+
     // Save pedido data locally so PDF always works
     lastPedidoNum = numeroPedido;
     lastPedidoId = null;
@@ -3359,7 +3419,7 @@ async function submitPedido() {
         observacoes: obs || null,
         criado_por: loja
       },
-      itens
+      itens: itensValidos
     };
 
     // Google Sheets — via iframe oculto (contorna CORS do Apps Script)
@@ -3369,28 +3429,37 @@ async function submitPedido() {
     // Cabeçalho + itens numa função atômica só: nunca mais fica um pedido
     // "fantasma" sem item no Supabase (Google Sheets continua sendo o registro
     // principal, então essa parte segue não-bloqueante de propósito).
+    // A própria função registrar_pedido() também revalida disponibilidade
+    // (defesa em profundidade — vale mesmo se algo chamar essa RPC direto,
+    // sem passar pela revalidação acima).
     try {
-      const { data: pedidoId, error: rpcErr } = await sb.rpc('registrar_pedido', {
+      const { data: rpcData, error: rpcErr } = await sb.rpc('registrar_pedido', {
         p_loja: loja,
         p_numero_pedido: numeroPedido,
         p_data_entrega_prevista: dataEntrega,
         p_observacoes: obs || null,
         p_criado_por: loja,
-        p_itens: itens,
+        p_itens: itensValidos,
       });
 
       if (rpcErr) {
         console.error('Erro ao salvar pedido no Supabase:', rpcErr.message);
       } else {
-        lastPedidoId = pedidoId;
-        console.log('Pedido salvo no Supabase. ID:', lastPedidoId, '— itens:', itens.length);
+        lastPedidoId = rpcData?.id ?? null;
+        const removidosServidor = rpcData?.itens_removidos || [];
+        if (removidosServidor.length) {
+          console.warn('registrar_pedido também removeu itens por indisponibilidade (checagem redundante):', removidosServidor);
+        }
+        console.log('Pedido salvo no Supabase. ID:', lastPedidoId, '— itens:', itensValidos.length);
       }
     } catch(saveErr) {
       console.error('Exceção ao salvar no Supabase:', saveErr);
     }
 
-    // Google Sheets em background (não bloqueante)
-    enviarParaSheets(pedidoPayload);
+
+    // (Removido: havia uma segunda chamada duplicada a enviarParaSheets() aqui,
+    // que fazia cada pedido ser enviado duas vezes para a planilha. O envio já
+    // acontece uma única vez, logo acima, antes de salvar no Supabase.)
 
     // SUCCESS
     btn.disabled = false;
