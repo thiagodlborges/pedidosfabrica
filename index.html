@@ -1923,7 +1923,7 @@ async function carregarCatalogoCompleto() {
   try {
     const [precifRes, catRes, lvRes] = await Promise.all([
       sb.from('precificacao_produtos')
-        .select('id, nome, categoria, ativo, disponivel_pedido_loja')
+        .select('id, nome, categoria, ativo, disponivel_pedido_loja, multiplo_pedido')
         .eq('ativo', true)
         .eq('disponivel_pedido_loja', true)
         .order('nome'),
@@ -1937,11 +1937,13 @@ async function carregarCatalogoCompleto() {
 
     if (!precifRes.error && precifRes.data) {
       precifPorNome = {};
+      multiploPorNomeDB = {};
       const porCatPrecif = { Gelato: [], Pote: [], Confeitaria: [] };
       const CATEGORIA_MAP = { 'Gelato': 'Gelato', 'Potes': 'Pote', 'Confeitaria': 'Confeitaria' };
       precifRes.data.forEach(p => {
         const bucket = CATEGORIA_MAP[p.categoria];
         if (bucket) { porCatPrecif[bucket].push(p.nome); precifPorNome[p.nome] = p.id; }
+        if (p.multiplo_pedido > 1) multiploPorNomeDB[p.nome] = p.multiplo_pedido;
       });
       if (porCatPrecif.Gelato.length)      { gelatos.length = 0;      porCatPrecif.Gelato.forEach(n => gelatos.push(n)); }
       if (porCatPrecif.Pote.length)        { potes.length = 0;        porCatPrecif.Pote.forEach(n => potes.push(n)); }
@@ -2056,12 +2058,16 @@ function formatDate(d) {
 // Produtos que só podem ser pedidos em múltiplos de uma quantidade fixa.
 // MULTIPLOS        → por NOME exato do produto (ex.: Petit Gateau, caixa de 6).
 // MULTIPLOS_CATEGORIA → por categoria/prefixo (ex.: todos os Potes, de 12 em 12).
-// Regra por nome tem prioridade sobre a regra por categoria.
+// multiploPorNomeDB  → vem do campo "multiplo_pedido" cadastrado na Precificação
+// Fábrica/Loja (ex.: Quindim = 6) — fonte preferida, pois dá pra ajustar
+// direto no cadastro do produto sem precisar mexer em código.
+// Prioridade: multiploPorNomeDB > MULTIPLOS (nome) > MULTIPLOS_CATEGORIA (prefixo).
 const MULTIPLOS = { 'Petit Gateau': 4 };
 const MULTIPLOS_CATEGORIA = { pote: 12 };
+let multiploPorNomeDB = {};
 
 function multiploDe(nome, prefix) {
-  return MULTIPLOS[nome] || MULTIPLOS_CATEGORIA[prefix] || 1;
+  return multiploPorNomeDB[nome] || MULTIPLOS[nome] || MULTIPLOS_CATEGORIA[prefix] || 1;
 }
 
 function buildTable(tbodyId, items, prefix, unit) {
@@ -3449,6 +3455,10 @@ async function submitPedido() {
         const removidosServidor = rpcData?.itens_removidos || [];
         if (removidosServidor.length) {
           console.warn('registrar_pedido também removeu itens por indisponibilidade (checagem redundante):', removidosServidor);
+        }
+        const ajustadosServidor = rpcData?.itens_ajustados || [];
+        if (ajustadosServidor.length) {
+          alert('Alguns itens só podem ser pedidos em múltiplos de uma quantidade fixa e foram arredondados pra cima automaticamente:\n\n' + ajustadosServidor.join('\n'));
         }
         console.log('Pedido salvo no Supabase. ID:', lastPedidoId, '— itens:', itensValidos.length);
       }
