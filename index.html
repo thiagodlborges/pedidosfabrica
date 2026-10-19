@@ -3377,11 +3377,19 @@ async function submitPedido() {
     const _precifIdsEnvolvidos = [...new Set(itens.map(it => it.precificacao_produto_id).filter(Boolean))];
     let _idsIndisponiveis = new Set();
     if (_precifIdsEnvolvidos.length) {
-      const { data: _statusAtual } = await sb.from('precificacao_produtos')
+      const { data: _statusAtual, error: _statusErr } = await sb.from('precificacao_produtos')
         .select('id, ativo, disponivel_pedido_loja')
         .in('id', _precifIdsEnvolvidos);
-      const _validos = new Set((_statusAtual || []).filter(p => p.ativo && p.disponivel_pedido_loja).map(p => p.id));
-      _precifIdsEnvolvidos.forEach(id => { if (!_validos.has(id)) _idsIndisponiveis.add(id); });
+      // Se a consulta falhou ou não devolveu NENHUMA linha, não dá pra saber o
+      // status (ex.: RLS de usuários sem acesso de leitura a precificacao_produtos
+      // devolve lista vazia sem erro). Nesse caso NÃO tratamos como "desativado":
+      // só removemos itens que o banco confirmou como inativos/indisponíveis.
+      if (!_statusErr && _statusAtual && _statusAtual.length) {
+        const _validos = new Set(_statusAtual.filter(p => p.ativo && p.disponivel_pedido_loja).map(p => p.id));
+        _precifIdsEnvolvidos.forEach(id => { if (!_validos.has(id)) _idsIndisponiveis.add(id); });
+      } else if (_statusErr) {
+        console.warn('Revalidação de disponibilidade falhou; enviando sem filtrar:', _statusErr);
+      }
     }
     const _itensRemovidosNomes = [];
     const itensValidos = itens.filter(it => {
