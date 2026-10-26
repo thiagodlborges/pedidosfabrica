@@ -1374,10 +1374,11 @@
         <div class="step-tab" data-step="1">Gelatos</div>
         <div class="step-tab" data-step="2">Potes</div>
         <div class="step-tab" data-step="3">Confeitaria</div>
-        <div class="step-tab" data-step="4">Insumos</div>
-        <div class="step-tab" data-step="5">Uniformes</div>
-        <div class="step-tab" data-step="6">Outros</div>
-        <div class="step-tab" data-step="7">Revisão</div>
+        <div class="step-tab" data-step="4">Variegatos</div>
+        <div class="step-tab" data-step="5">Insumos</div>
+        <div class="step-tab" data-step="6">Uniformes</div>
+        <div class="step-tab" data-step="7">Outros</div>
+        <div class="step-tab" data-step="8">Revisão</div>
       </div>
 
       <div class="side-nav-sair">
@@ -1547,7 +1548,7 @@
       <div class="section-icon">🏪</div>
       <div>
         <div class="section-title">Identificação da Loja</div>
-        <div class="section-subtitle">Seção 1 de 8</div>
+        <div class="section-subtitle">Seção 1 de 9</div>
       </div>
     </div>
     <div class="section-body">
@@ -1582,15 +1583,7 @@
       </div>
 
       <div class="nav-buttons">
-        <div class="step-dots">
-          <div class="dot active"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
+        <div class="step-dots"><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
         </div>
         <button class="btn-next" onclick="nextStep()">Próximo &rarr;</button>
       </div>
@@ -1603,7 +1596,7 @@
       <div class="section-icon">🍦</div>
       <div>
         <div class="section-title">Caixas de Gelato</div>
-        <div class="section-subtitle">Seção 2 de 8 — Selecionar sabores e quantidades</div>
+        <div class="section-subtitle">Seção 2 de 9 — Selecionar sabores e quantidades</div>
       </div>
     </div>
     <div class="section-body">
@@ -1613,8 +1606,7 @@
       </table>
       <div class="nav-buttons">
         <button class="btn-prev" onclick="prevStep()">&larr; Anterior</button>
-        <div class="step-dots">
-          <div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <div class="step-dots"><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
         </div>
         <button class="btn-next" onclick="nextStep()">Próximo &rarr;</button>
       </div>
@@ -1627,7 +1619,7 @@
       <div class="section-icon">🥡</div>
       <div>
         <div class="section-title">Potes Fechados</div>
-        <div class="section-subtitle">Seção 3 de 8 — Para revenda</div>
+        <div class="section-subtitle">Seção 3 de 9 — Para revenda</div>
       </div>
     </div>
     <div class="section-body">
@@ -1637,8 +1629,7 @@
       </table>
       <div class="nav-buttons">
         <button class="btn-prev" onclick="prevStep()">&larr; Anterior</button>
-        <div class="step-dots">
-          <div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <div class="step-dots"><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
         </div>
         <button class="btn-next" onclick="nextStep()">Próximo &rarr;</button>
       </div>
@@ -1651,7 +1642,7 @@
       <div class="section-icon">🎂</div>
       <div>
         <div class="section-title">Confeitaria</div>
-        <div class="section-subtitle">Seção 4 de 8</div>
+        <div class="section-subtitle">Seção 4 de 9</div>
       </div>
     </div>
     <div class="section-body">
@@ -1661,21 +1652,43 @@
       </table>
       <div class="nav-buttons">
         <button class="btn-prev" onclick="prevStep()">&larr; Anterior</button>
-        <div class="step-dots">
-          <div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <div class="step-dots"><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
         </div>
         <button class="btn-next" onclick="nextStep()">Próximo &rarr;</button>
       </div>
     </div>
   </div>
 
-  <!-- SECTION 4: INSUMOS -->
+  <!-- SECTION 4: VARIEGATOS -->
   <div class="section-card" id="section-4">
+    <div class="section-header">
+      <div class="section-icon">🍯</div>
+      <div>
+        <div class="section-title">Variegatos</div>
+        <div class="section-subtitle">Seção 5 de 9 — Variegatos, coberturas e matérias-primas</div>
+      </div>
+    </div>
+    <div class="section-body">
+      <table class="product-table" id="variegatos-table">
+        <thead><tr><th>Item</th><th style="text-align:center">Quantidade</th></tr></thead>
+        <tbody id="variegatos-body"></tbody>
+      </table>
+      <div class="nav-buttons">
+        <button class="btn-prev" onclick="prevStep()">&larr; Anterior</button>
+        <div class="step-dots"><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+        <button class="btn-next" onclick="nextStep()">Próximo &rarr;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 5: INSUMOS -->
+  <div class="section-card" id="section-5">
     <div class="section-header">
       <div class="section-icon">📦</div>
       <div>
         <div class="section-title">Insumos & Uniformes</div>
-        <div class="section-subtitle">Seção 5 de 8 — Embalagens, bebidas, descartáveis</div>
+        <div class="section-subtitle">Seção 6 de 9 — Embalagens, bebidas, descartáveis</div>
       </div>
     </div>
     <div class="section-body">
@@ -1685,8 +1698,7 @@
       </table>
       <div class="nav-buttons">
         <button class="btn-prev" onclick="prevStep()">&larr; Anterior</button>
-        <div class="step-dots">
-          <div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <div class="step-dots"><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
         </div>
         <button class="btn-next" onclick="nextStep()">Próximo &rarr;</button>
       </div>
@@ -1694,12 +1706,12 @@
   </div>
 
   <!-- SECTION 5: UNIFORMES -->
-  <div class="section-card" id="section-5">
+  <div class="section-card" id="section-6">
     <div class="section-header">
       <div class="section-icon">👕</div>
       <div>
         <div class="section-title">Uniformes</div>
-        <div class="section-subtitle">Seção 6 de 8 — Kits, dolmãs, aventais e afins</div>
+        <div class="section-subtitle">Seção 7 de 9 — Kits, dolmãs, aventais e afins</div>
       </div>
     </div>
     <div class="section-body">
@@ -1709,8 +1721,7 @@
       </table>
       <div class="nav-buttons">
         <button class="btn-prev" onclick="prevStep()">&larr; Anterior</button>
-        <div class="step-dots">
-          <div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div>
+        <div class="step-dots"><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div>
         </div>
         <button class="btn-next" onclick="nextStep()">Próximo &rarr;</button>
       </div>
@@ -1718,12 +1729,12 @@
   </div>
 
   <!-- SECTION 6: OUTROS -->
-  <div class="section-card" id="section-6">
+  <div class="section-card" id="section-7">
     <div class="section-header">
       <div class="section-icon">✏️</div>
       <div>
         <div class="section-title">Outros Pedidos</div>
-        <div class="section-subtitle">Seção 7 de 8 — Itens livres e observações</div>
+        <div class="section-subtitle">Seção 8 de 9 — Itens livres e observações</div>
       </div>
     </div>
     <div class="section-body">
@@ -1741,8 +1752,7 @@
 
       <div class="nav-buttons">
         <button class="btn-prev" onclick="prevStep()">&larr; Anterior</button>
-        <div class="step-dots">
-          <div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div>
+        <div class="step-dots"><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div>
         </div>
         <button class="btn-next" onclick="nextStep()">Revisar Pedido &rarr;</button>
       </div>
@@ -1750,12 +1760,12 @@
   </div>
 
   <!-- SECTION 7: REVISÃO -->
-  <div class="section-card" id="section-7">
+  <div class="section-card" id="section-8">
     <div class="section-header">
       <div class="section-icon">📋</div>
       <div>
         <div class="section-title">Revisão do Pedido</div>
-        <div class="section-subtitle">Seção 8 de 8 — Confirme antes de enviar</div>
+        <div class="section-subtitle">Seção 9 de 9 — Confirme antes de enviar</div>
       </div>
     </div>
     <div class="section-body">
@@ -1765,8 +1775,7 @@
       </div>
       <div class="nav-buttons">
         <button class="btn-prev" onclick="prevStep()">&larr; Corrigir</button>
-        <div class="step-dots">
-          <div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div>
+        <div class="step-dots"><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div>
         </div>
         <button class="btn-submit" id="submitBtn" onclick="submitPedido()">✓ Confirmar Pedido</button>
       </div>
@@ -1858,6 +1867,30 @@ const insumos = [
   {nome:'Avental', un:'unid.'}
 ];
 
+// Categoria Variegato — populada pela fábrica via catalogo_produtos
+// (categoria 'Variegato'). Unidade de envio herdada da lista abaixo (por nome).
+const variegatos = [
+  {nome:'VARIEGATO PISTACCHIO CHOCO DUBAI', un:'balde'},
+  {nome:'VARIEGATO GALILEO STRACCIATELLA AO LEITE', un:'balde'},
+  {nome:'CACAU EM PÓ VERMELHO 100% ALCALINO CALLEBAUT', un:'porcionado'},
+  {nome:'DOCE DE LEITE AVIAÇÃO', un:'balde'},
+  {nome:'VARIEGATO NUTTY WOW NOCCIOLA', un:'balde'},
+  {nome:'CAFÉ EM GRÃO', un:'Santa Mônica'},
+  {nome:'VARIEGATO MORANGO (FRAGOLA) / SUSPIRO', un:'balde'},
+  {nome:'VARIEGATO CROCKOLOSI MERINGA', un:'balde'},
+  {nome:'PISTACHE CRU IRANIANO', un:'porcionado'},
+  {nome:'VARIEGATO FRAMBOESA (LAMPONE)', un:'balde'},
+  {nome:'VARIEGATO COOKIES SPICY', un:'balde'},
+  {nome:'VARIEGATO AMARENA ITALIA', un:'balde'},
+  {nome:'QUELLA CREME DE AVELÃ', un:'balde'},
+  {nome:'QUELLA CREME DE PISTACHE', un:'balde'},
+  {nome:'PÓ DE MASSA DE CASQUINHA', un:'pacote'},
+  {nome:'CREME DE AVELÃ VABENE', un:'porcionado'},
+  {nome:'CHOCOLATE AO LEITE EM BARRA SICAO', un:'unidade'},
+  {nome:'VARIEGATO QUELLO CARAMELO', un:'balde'},
+  {nome:'VARIEGATO CROCKOLOSI CAFÉ', un:'balde'}
+];
+
 // Categoria Uniformes — nasce vazia; é populada pela fábrica via catalogo_produtos
 // (categoria 'Uniforme'). Mantida separada de "insumos".
 const uniformes = [];
@@ -1868,7 +1901,7 @@ const uniformes = [];
 let currentStep = 0;
 let lastPedidoId = null;
 let lastPedidoNum = null;
-const totalSteps = 8;
+const totalSteps = 9;
 
 // ============================================================
 // INIT
@@ -1884,6 +1917,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   buildTable('gelato-body', gelatos, 'gelato', 'caixas');
   buildTable('potes-body', potes, 'pote', 'unid.');
   buildTable('confeitaria-body', confeitaria, 'confeitaria', 'unid.');
+  buildVariegatosTable();
   buildInsumosTable();
   buildUniformesTable();
   addOutroItem();
@@ -1920,6 +1954,7 @@ async function carregarCatalogoCompleto() {
   // Guarda os insumos locais para herdar a UNIDADE (a tabela do catálogo não
   // armazena unidade; casamos pelo nome).
   const insumosLocais = insumos.slice();
+  const variegatosLocais = variegatos.slice();
   try {
     const [precifRes, catRes, lvRes] = await Promise.all([
       sb.from('precificacao_produtos')
@@ -1930,7 +1965,7 @@ async function carregarCatalogoCompleto() {
       sb.from('catalogo_produtos')
         .select('nome, categoria, ativo, ordem')
         .eq('ativo', true)
-        .in('categoria', ['Insumo', 'Uniforme'])
+        .in('categoria', ['Insumo', 'Uniforme', 'Variegato'])
         .order('ordem', { ascending: true }),
       sb.from('lv_produtos').select('codigo, produto, unidade').eq('categoria', 'Uniformes')
     ]);
@@ -1958,7 +1993,7 @@ async function carregarCatalogoCompleto() {
     const { data, error } = catRes;
     if (error || !data || !data.length) return; // mantém arrays locais de Insumo/Uniforme
 
-    const porCat = { Insumo: [], Uniforme: [] };
+    const porCat = { Insumo: [], Uniforme: [], Variegato: [] };
     data.forEach(p => { if (porCat[p.categoria]) porCat[p.categoria].push(p.nome); });
 
     if (porCat.Insumo.length) {
@@ -1966,6 +2001,13 @@ async function carregarCatalogoCompleto() {
       porCat.Insumo.forEach(nome => {
         const local = insumosLocais.find(x => x.nome === nome);
         insumos.push({ nome, un: local ? local.un : '' });
+      });
+    }
+    if (porCat.Variegato.length) {
+      variegatos.length = 0;
+      porCat.Variegato.forEach(nome => {
+        const local = variegatosLocais.find(x => x.nome === nome);
+        variegatos.push({ nome, un: local ? local.un : '' });
       });
     }
     if (porCat.Uniforme.length) {
@@ -2092,6 +2134,10 @@ function buildTable(tbodyId, items, prefix, unit) {
         </td>
       </tr>`;
   });
+}
+
+function buildVariegatosTable() {
+  buildTable('variegatos-body', variegatos, 'variegato', '');
 }
 
 function buildInsumosTable() {
@@ -2488,8 +2534,8 @@ function mostrarArea(area) {
 // ── RANKING DE ITENS MAIS PEDIDOS ──────────────────────────
 let ultimoRanking = null; // guarda o último ranking calculado (para exportar)
 
-const RANK_CAT_ORDER = ['Gelato', 'Pote', 'Confeitaria', 'Insumo', 'Uniforme', 'Outro'];
-const RANK_CAT_EMOJI = { Gelato: '🍦', Pote: '🥡', Confeitaria: '🎂', Insumo: '📦', Uniforme: '👕', Outro: '✏️' };
+const RANK_CAT_ORDER = ['Gelato', 'Pote', 'Confeitaria', 'Variegato', 'Insumo', 'Uniforme', 'Outro'];
+const RANK_CAT_EMOJI = { Gelato: '🍦', Pote: '🥡', Confeitaria: '🎂', Variegato: '🍯', Insumo: '📦', Uniforme: '👕', Outro: '✏️' };
 
 function toggleRankPeriodo() {
   const custom = document.getElementById('rankFiltroPeriodo').value === 'custom';
@@ -3139,7 +3185,7 @@ function atualizarVisibilidadeFormulario() {
 function nextStep() {
   if (!validateStep(currentStep)) return;
   currentStep++;
-  if (currentStep === 7) buildReview();
+  if (currentStep === 8) buildReview();
   showStep(currentStep);
 }
 
@@ -3228,6 +3274,7 @@ function buildReview() {
   const gelatoItems = getQtyList(gelatos, 'gelato');
   const poteItems = getQtyList(potes, 'pote');
   const confItems = getQtyList(confeitaria, 'confeitaria');
+  const varItems = getQtyList(variegatos, 'variegato');
   const insItems = getQtyList(insumos, 'insumo');
   const uniItems = getQtyList(uniformes, 'uniforme');
   const outroItems = getOutros();
@@ -3256,6 +3303,12 @@ function buildReview() {
   if (confItems.length) {
     html += `<div class="review-section"><div class="review-section-title">🎂 Confeitaria</div><table class="review-table">`;
     confItems.forEach(x => { html += `<tr><td>${x.nome}</td><td>${x.qty} unid.</td></tr>`; });
+    html += `</table></div>`;
+  }
+
+  if (varItems.length) {
+    html += `<div class="review-section"><div class="review-section-title">🍯 Variegatos</div><table class="review-table">`;
+    varItems.forEach(x => { html += `<tr><td>${x.nome}</td><td>${x.qty} ${x.un}</td></tr>`; });
     html += `</table></div>`;
   }
 
@@ -3355,6 +3408,7 @@ async function submitPedido() {
     addItens(gelatos, 'gelato', 'Gelato');
     addItens(potes, 'pote', 'Pote');
     addItens(confeitaria, 'confeitaria', 'Confeitaria');
+    addItens(variegatos, 'variegato', 'Variegato');
     addItens(insumos, 'insumo', 'Insumo');
     addItens(uniformes, 'uniforme', 'Uniforme');
 
@@ -3701,6 +3755,7 @@ function downloadPDF() {
   const gelatoRows    = getRows(gelatos, 'gelato');
   const poteRows      = getRows(potes, 'pote');
   const confRows      = getRows(confeitaria, 'confeitaria');
+  const varRows       = getRows(variegatos, 'variegato');
   const insRows       = getRows(insumos, 'insumo');
   const uniRows       = getRows(uniformes, 'uniforme');
 
@@ -3712,7 +3767,7 @@ function downloadPDF() {
     if (desc) outroRows.push([desc, qty, '-', '☐']);
   });
 
-  const totalItens = gelatoRows.length + poteRows.length + confRows.length + insRows.length + uniRows.length + outroRows.length;
+  const totalItens = gelatoRows.length + poteRows.length + confRows.length + varRows.length + insRows.length + uniRows.length + outroRows.length;
 
   if (totalItens === 0) {
     doc.setFontSize(10);
@@ -3724,6 +3779,7 @@ function downloadPDF() {
   if (gelatoRows.length)  drawSection('GELATOS — CAIXAS', '🍦', gelatoRows);
   if (poteRows.length)    drawSection('POTES FECHADOS — REVENDA', '🥡', poteRows);
   if (confRows.length)    drawSection('CONFEITARIA', '🎂', confRows);
+  if (varRows.length)     drawSection('VARIEGATOS', '🍯', varRows);
   if (insRows.length)     drawSection('INSUMOS, EMBALAGENS & UNIFORMES', '📦', insRows);
   if (uniRows.length)     drawSection('UNIFORMES', '👕', uniRows);
   if (outroRows.length)   drawSection('OUTROS ITENS', '✏️', outroRows);
@@ -3909,7 +3965,7 @@ async function gerarPDFHistorico(pedidoId) {
   doc.text(de.charAt(0).toUpperCase()+de.slice(1),22,y+27);
   y+=36;
 
-  const cats={Gelato:'GELATOS — CAIXAS',Pote:'POTES FECHADOS',Confeitaria:'CONFEITARIA',Insumo:'INSUMOS & UNIFORMES',Outro:'OUTROS ITENS'};
+  const cats={Gelato:'GELATOS — CAIXAS',Pote:'POTES FECHADOS',Confeitaria:'CONFEITARIA',Variegato:'VARIEGATOS',Insumo:'INSUMOS & UNIFORMES',Outro:'OUTROS ITENS'};
   const grupos={};
   (p.pedido_itens||[]).forEach(item=>{
     const m=(item.observacao||'').match(/^\[(\w+)\]/);
